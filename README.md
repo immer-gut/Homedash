@@ -21,7 +21,7 @@ Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links
 Voraussetzungen:
 
 - Docker mit Docker Compose
-- Ein freier Host-Port, standardmaessig `3000`
+- Ein freier Host-Port, standardmaessig `3002`
 
 Start lokal:
 
@@ -30,10 +30,10 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Danach ist Homedash unter `http://localhost:3000` erreichbar. Im Heimnetz nutzt du die IP des Docker-Hosts, zum Beispiel:
+Danach ist Homedash unter `http://localhost:3002` erreichbar. Im Heimnetz nutzt du die IP des Docker-Hosts, zum Beispiel:
 
 ```text
-http://<server-ip>:3000/
+http://<server-ip>:3002/
 ```
 
 Beim ersten Start erscheint ein Setup-Dialog. Dort legst du Seitentitel, erstes Profil und ein Admin-Passwort fest.
@@ -50,7 +50,7 @@ Empfohlene Stack-Variablen:
 
 ```text
 HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:latest
-HOMEDASH_PORT=3000
+HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
 ```
@@ -59,7 +59,7 @@ Portainer/Docker Compose vergibt den Container-Namen automatisch mit dem Stack-N
 
 Testhinweise fuer Portainer:
 
-- Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3001` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
+- Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
 - Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren.
@@ -72,7 +72,7 @@ services:
     image: ghcr.io/immer-gut/homedash:latest
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3002:3000"
     environment:
       PORT: 3000
       HOST: 0.0.0.0
@@ -85,13 +85,13 @@ volumes:
   homedash_data:
 ```
 
-Wenn Port `3000` auf dem Host schon belegt ist, aendere nur den externen Port:
+Wenn Port `3002` auf dem Host schon belegt ist, aendere nur den externen Port:
 
 ```text
-HOMEDASH_PORT=3001
+HOMEDASH_PORT=3003
 ```
 
-Die App bleibt im Container auf `3000`, ist aber extern unter `http://<server-ip>:3001/` erreichbar.
+Die App bleibt im Container auf `3000`, ist aber extern unter `http://<server-ip>:3003/` erreichbar.
 
 ## Environment Variablen
 
@@ -100,7 +100,7 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
 | `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:latest` | Docker Image fuer den Stack. Fuer reproduzierbare Deployments auf einen Versions-Tag setzen. |
-| `HOMEDASH_PORT` | `3000` | Externer Host-Port. |
+| `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
 | `ADMIN_PASSWORD` | leer | Optionales Admin-Passwort. Alternativ kann das Passwort beim ersten Start im Setup gesetzt werden. |

@@ -3,7 +3,7 @@ services:
     image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:latest}
     restart: unless-stopped
     ports:
-      - "${HOMEDASH_PORT:-3000}:${HOMEDASH_INTERNAL_PORT:-3000}"
+      - "${HOMEDASH_PORT:-3002}:${HOMEDASH_INTERNAL_PORT:-3000}"
     environment:
       PORT: ${HOMEDASH_INTERNAL_PORT:-3000}
       HOST: 0.0.0.0
