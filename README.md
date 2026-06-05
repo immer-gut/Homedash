@@ -2,6 +2,8 @@
 
 Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
+Aktuelle Version: `v1.1.0`
+
 ## Funktionen
 
 - Browserbasierte Pflege von Links, Kategorien, Profilen, Notizen, Titel und Untertitel
@@ -11,7 +13,7 @@ Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links
 - JSON-Backup/Restore in der UI
 - Import von Browser-Bookmarks als HTML-Datei
 - Automatischer Favicon-Abruf mit lokalem Cache
-- Optionale Link-Statusanzeigen fuer Proxmox, Unraid, AMP und einfache HTTP-Dienste
+- Optionale Link-Statusanzeigen fuer Proxmox VE, Proxmox Backup Server, Home Assistant, Unraid, AMP und einfache HTTP-Dienste
 - Themes: Retro, Time Circuit, Dark, Light und Terminal
 - Startseiten- und Freigabe-Modus fuer normale Read-only Nutzung
 - Widget-Galerie fuer Wetter, Notizen, Statusuebersicht und Linkstatistik
@@ -49,7 +51,7 @@ In Portainer kannst du Homedash als Git-Stack deployen.
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:latest
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.1.0
 HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
@@ -62,14 +64,14 @@ Testhinweise fuer Portainer:
 - Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
-- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren.
+- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.1.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
   homedash:
-    image: ghcr.io/immer-gut/homedash:latest
+    image: ghcr.io/immer-gut/homedash:v1.1.0
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -99,7 +101,7 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:latest` | Docker Image fuer den Stack. Fuer reproduzierbare Deployments auf einen Versions-Tag setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.1.0` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
 | `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
@@ -117,10 +119,26 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/immer-gut/homedash:latest
+ghcr.io/immer-gut/homedash:v1.1.0
 ```
 
-Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `v0.1.0` erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
+Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `v1.1.0` erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
+
+## Versionierung
+
+Homedash nutzt ab `v1.1.0` semantische Versionierung:
+
+- Patch-Versionen wie `v1.1.1`: Fehlerkorrekturen ohne neue Bedienung.
+- Minor-Versionen wie `v1.2.0`: neue Widgets, neue Integrationen oder sichtbare Funktionen.
+- Major-Versionen wie `v2.0.0`: inkompatible Aenderungen an Datenformat, API oder Deployment.
+
+Fuer Portainer wird ein gepinnter Image-Tag empfohlen:
+
+```text
+ghcr.io/immer-gut/homedash:v1.1.0
+```
+
+`latest` bleibt verfuegbar, ist aber beweglich. Praktisch fuer Tests, weniger praktisch, wenn man spaeter wissen will, was eigentlich laeuft. Verrueckte Idee, ich weiss.
 
 Fuer lokale Entwicklung mit Build aus dem Repository:
 
@@ -133,7 +151,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 Profile werden direkt im Browser verwaltet. Jedes Profil hat eigene Kategorien und Links, teilt sich aber Titel, Theme, Widgets und Favicon-Cache mit der Homedash-Instanz.
 
 - `+ Profil` erstellt ein neues Profil.
-- `Profil löschen` entfernt das aktive Profil, solange mindestens ein weiteres Profil existiert.
+- `Profil loeschen` entfernt das aktive Profil, solange mindestens ein weiteres Profil existiert.
 - Das Profil-Dropdown wechselt zwischen Profilen.
 - `Demo-Profil` in den Einstellungen erstellt ein anonymes Beispielprofil fuer Tests oder Screenshots.
 
@@ -295,6 +313,8 @@ Status-Zugangsdaten werden in `homedash.json` gespeichert und sind damit auch im
 HOMEDASH_STATUS_TARGETS=[{"type":"proxmox","name":"Proxmox","url":"https://<proxmox-ip>:8006","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"},{"type":"proxmoxbackup","name":"PBS","url":"https://<pbs-ip>:8007","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"}]
 ```
 
+Beim gesperrten Admin-Modus liefert Homedash gespeicherte Tokens/API-Keys nicht an den Browser aus. Beim Speichern bleiben vorhandene Secrets serverseitig erhalten, solange Link-ID und Widget-Typ gleich bleiben.
+
 ## Updates
 
 Lokales Update:
@@ -308,8 +328,9 @@ docker compose up -d
 Portainer Update:
 
 1. Stack oeffnen.
-2. `Pull latest image/redeploy` oder `Update the stack` ausfuehren.
-3. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
+2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.1.0`.
+3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
+4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 
 Das Daten-Volume bleibt bei normalen Updates erhalten. Loesche das Volume nur, wenn du bewusst alle Homedash-Daten entfernen willst.
 
