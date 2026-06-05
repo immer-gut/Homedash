@@ -1,0 +1,18 @@
+services:
+  homebase:
+    image: ${HOMEBASE_IMAGE:-ghcr.io/sandavdesigns/homebase:latest}
+    restart: unless-stopped
+    ports:
+      - "${HOMEBASE_PORT:-3000}:${HOMEBASE_INTERNAL_PORT:-3000}"
+    environment:
+      PORT: ${HOMEBASE_INTERNAL_PORT:-3000}
+      HOST: 0.0.0.0
+      DATA_DIR: /data
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      HOMEBASE_STATUS_TARGETS: ${HOMEBASE_STATUS_TARGETS:-[]}
+    volumes:
+      - homebase_data:/data
+
+volumes:
+  homebase_data:
+    name: ${HOMEBASE_VOLUME_NAME:-homebase_data}

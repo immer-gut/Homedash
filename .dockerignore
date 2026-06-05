@@ -1,0 +1,15 @@
+.env
+.env.*
+data
+data/
+favicons
+favicons/
+homebase.json
+*.tar
+*.tar.gz
+*.zip
+.git
+.gitignore
+node_modules
+npm-debug.log*
+.DS_Store

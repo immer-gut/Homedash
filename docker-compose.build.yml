@@ -1,0 +1,4 @@
+services:
+  homebase:
+    build: .
+    image: ${HOMEBASE_IMAGE:-ghcr.io/sandavdesigns/homebase:local}

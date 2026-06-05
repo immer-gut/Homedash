@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#150829" />
+    <title>Homebase</title>
+    <link rel="stylesheet" href="/styles.css?v=product2" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div class="brand-block">
+          <h1 id="pageTitle">Homebase</h1>
+          <p id="pageSubtitle"></p>
+        </div>
+        <div class="topbar-cards">
+          <article class="weather-widget" id="weatherWidget" hidden>
+            <header class="weather-header">
+              <span id="weatherLabel">Wetter</span>
+              <button id="refreshWeatherButton" type="button" aria-label="Wetter aktualisieren">↻</button>
+            </header>
+            <div id="weatherBody" class="weather-body"></div>
+          </article>
+          <div class="clock" aria-live="polite">
+            <span class="clock-date" id="dateLabel">Heute</span>
+            <span id="timeLabel">--:--</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="command-row" aria-label="Startseitenwerkzeuge">
+        <button id="searchToggleButton" type="button" aria-expanded="false">Suche</button>
+        <button id="googleSearchButton" type="button">Google</button>
+        <label class="search" id="searchPanel" hidden>
+          <span>Suchen</span>
+          <input id="searchInput" type="search" placeholder="Link, Kategorie oder Google-Suche" autocomplete="off" />
+        </label>
+        <button class="primary admin-only" id="addButton" type="button">+ Link</button>
+        <button class="admin-only" id="newNoteButton" type="button">+ Notiz</button>
+        <button id="adminButton" type="button" aria-pressed="false">Admin gesperrt</button>
+        <label class="compact-field command-profile">
+          <span>Profil</span>
+          <select id="profileSelect"></select>
+        </label>
+        <button class="admin-only" id="settingsButton" type="button">Einstellungen</button>
+      </section>
+
+      <section id="widgets" class="widgets" aria-label="Widgets">
+        <article class="widget status-widget" id="statusWidget" hidden>
+          <header class="widget-header">
+            <p>Systemstatus</p>
+            <button id="refreshStatusButton" type="button">Aktualisieren</button>
+          </header>
+          <div id="statusList" class="status-list"></div>
+          <p id="statusUpdated" class="status-updated"></p>
+        </article>
+        <article class="widget stats-widget" id="statsWidget" hidden>
+          <header class="widget-header">
+            <p>Übersicht</p>
+          </header>
+          <div id="statsList" class="mini-stats"></div>
+        </article>
+        <article class="widget notes-widget" id="notesWidget" data-widget="notes">
+          <header class="widget-header">
+            <p>Notizen</p>
+            <button id="addNoteButton" class="admin-only" type="button">+ Notiz</button>
+          </header>
+          <div id="notesList" class="notes-list"></div>
+          <textarea id="noteInput" rows="2" placeholder="Neue Notiz"></textarea>
+        </article>
+      </section>
+
+      <section id="lockedState" class="empty" hidden>
+        <h2>Admin gesperrt</h2>
+        <p>Links sind sichtbar. Änderungen, Import und Profilverwaltung werden nach dem Entsperren aktiv.</p>
+      </section>
+
+      <section id="emptyState" class="empty" hidden>
+        <h2>Noch keine Treffer</h2>
+        <p>Lege einen neuen Link an oder passe die Suche an.</p>
+      </section>
+
+      <section id="groups" class="groups" aria-label="Links"></section>
+    </main>
+
+    <dialog id="setupDialog">
+      <form method="dialog" class="dialog-card" id="setupForm">
+        <header>
+          <h2>Homebase einrichten</h2>
+        </header>
+        <label>
+          Seitentitel
+          <input id="setupTitle" required maxlength="80" value="Homebase" />
+        </label>
+        <label>
+          Erstes Profil
+          <input id="setupProfileName" required maxlength="60" value="Privat" />
+        </label>
+        <label>
+          Admin-Passwort
+          <input id="setupPassword" type="password" required minlength="8" autocomplete="new-password" />
+        </label>
+        <footer>
+          <span></span>
+          <span></span>
+          <span></span>
+          <button class="primary" id="completeSetupButton" value="default" type="button">Einrichten</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="editorDialog">
+      <form method="dialog" class="dialog-card" id="linkForm">
+        <header>
+          <h2 id="dialogTitle">Link bearbeiten</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <input type="hidden" id="linkId" />
+        <label>
+          URL
+          <input id="linkUrl" required inputmode="url" placeholder="https://..." />
+        </label>
+        <label>
+          Name
+          <input id="linkTitle" maxlength="80" placeholder="Wird aus der Seite geholt" />
+        </label>
+        <div class="link-test-row">
+          <button id="testLinkButton" type="button">Link testen</button>
+          <span id="linkStatus" class="status-pill is-idle">Nicht getestet</span>
+        </div>
+        <label>
+          Kategorie
+          <select id="linkCategory" required></select>
+        </label>
+        <label id="newLinkCategoryLabel" hidden>
+          Neue Kategorie
+          <input id="newLinkCategory" maxlength="40" placeholder="z.B. Tools" />
+        </label>
+        <label>
+          Notiz
+          <input id="linkNote" maxlength="120" />
+        </label>
+        <div class="link-widget-config">
+          <label class="toggle-row">
+            <input id="linkStatusEnabled" type="checkbox" />
+            <span>Status-Widget an diesem Link</span>
+          </label>
+          <div id="linkStatusFields" class="status-config-fields" hidden>
+            <label>
+              Widget
+              <select id="linkStatusType">
+                <option value="basic">Service</option>
+                <option value="proxmox">Proxmox</option>
+                <option value="unraid">Unraid</option>
+                <option value="amp">AMP</option>
+                <option value="homeassistant">Home Assistant</option>
+              </select>
+            </label>
+            <label>
+              Status-URL
+              <input id="linkStatusUrl" placeholder="leer = Link-URL" />
+            </label>
+            <label data-status-field="proxmox">
+              Proxmox Token-ID
+              <input id="linkStatusTokenId" autocomplete="off" placeholder="root@pam!homebase" />
+            </label>
+            <label data-status-field="proxmox">
+              Proxmox Token-Secret
+              <input id="linkStatusTokenSecret" type="password" autocomplete="off" />
+            </label>
+            <label data-status-field="unraid homeassistant">
+              API-Key / Long-Lived Token
+              <input id="linkStatusApiKey" type="password" autocomplete="off" />
+            </label>
+            <label data-status-field="homeassistant">
+              HA Schalter
+              <input id="linkStatusEntities" placeholder="switch.steckdose, light.schreibtisch" />
+            </label>
+            <label data-status-field="amp">
+              AMP Benutzer
+              <input id="linkStatusUsername" autocomplete="off" />
+            </label>
+            <label data-status-field="amp">
+              AMP Passwort
+              <input id="linkStatusPassword" type="password" autocomplete="new-password" />
+            </label>
+            <label>
+              API-Pfad
+              <input id="linkStatusPath" placeholder="optional" />
+            </label>
+            <label class="toggle-row" data-status-field="amp">
+              <input id="linkStatusDebug" type="checkbox" />
+              <span>AMP Debug anzeigen</span>
+            </label>
+            <button id="toggleSecretFieldsButton" class="subtle-button" type="button">Zugangsdaten anzeigen</button>
+          </div>
+        </div>
+        <footer>
+          <button id="deleteButton" class="danger" type="button">Löschen</button>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="saveLinkButton" value="default" type="button">Speichern</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="settingsDialog">
+      <form method="dialog" class="dialog-card" id="settingsForm">
+        <header>
+          <h2>Einstellungen</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <label>
+          Titel
+          <input id="settingsTitle" required maxlength="80" />
+        </label>
+        <label>
+          Untertitel
+          <input id="settingsSubtitle" maxlength="140" />
+        </label>
+        <label>
+          Theme
+          <select id="themeSelect">
+            <option value="retro">Retro</option>
+            <option value="time-circuit">Time Circuit</option>
+            <option value="dark">Dark</option>
+            <option value="light">Light</option>
+            <option value="terminal">Terminal</option>
+          </select>
+        </label>
+        <div class="settings-options" aria-label="Anzeige">
+          <label class="toggle-row">
+            <input id="settingStartpageMode" type="checkbox" />
+            <span>Startseiten-Modus</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShareMode" type="checkbox" />
+            <span>Freigabe-Modus</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShowCategoryCounts" type="checkbox" />
+            <span>Kategorie-Zahlen anzeigen</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingCompactCategoryLayout" type="checkbox" />
+            <span>Kategorien kompakt stapeln</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShowLinkStatus" type="checkbox" />
+            <span>Status an Linkkarten anzeigen</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShowNotes" type="checkbox" />
+            <span>Notizenbereich anzeigen</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingOpenLinksInNewTab" type="checkbox" />
+            <span>Links in neuem Tab öffnen</span>
+          </label>
+        </div>
+        <div class="settings-options" aria-label="Widget-Galerie">
+          <label class="toggle-row">
+            <input id="settingShowStatsWidget" type="checkbox" />
+            <span>Übersicht-Widget anzeigen</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShowStatusWidget" type="checkbox" />
+            <span>Status-Widget anzeigen</span>
+          </label>
+          <label class="toggle-row">
+            <input id="settingShowWeatherWidget" type="checkbox" />
+            <span>Wetter-Widget anzeigen</span>
+          </label>
+          <div class="weather-settings" id="weatherSettings">
+            <label>
+              Wetter-Ort
+              <input id="settingWeatherLabel" maxlength="40" placeholder="Zuhause" />
+            </label>
+            <label>
+              Breitengrad
+              <input id="settingWeatherLatitude" inputmode="decimal" placeholder="52.5200" />
+            </label>
+            <label>
+              Längengrad
+              <input id="settingWeatherLongitude" inputmode="decimal" placeholder="13.4050" />
+            </label>
+          </div>
+        </div>
+        <div class="settings-actions" aria-label="Verwaltung">
+          <button id="newProfileButton" type="button">+ Profil</button>
+          <button id="deleteProfileButton" class="danger subtle-danger" type="button">Profil löschen</button>
+          <button id="createDemoButton" type="button">Demo-Profil</button>
+          <button id="settingsCategoriesButton" type="button">Kategorien</button>
+          <button id="settingsBookmarkImportButton" type="button">Bookmarks</button>
+          <button id="settingsImportButton" type="button">Import</button>
+          <button id="settingsBackupButton" type="button">Backup</button>
+          <button id="settingsRestoreButton" type="button">Restore</button>
+        </div>
+        <footer>
+          <span></span>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="saveSettingsButton" value="default" type="button">Speichern</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="categoriesDialog">
+      <form method="dialog" class="dialog-card wide-dialog" id="categoriesForm">
+        <header>
+          <h2>Kategorien</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <div class="category-editor" id="categoryEditor"></div>
+        <footer>
+          <button id="addCategoryButton" type="button">+ Kategorie</button>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="saveCategoriesButton" value="default" type="button">Speichern</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="profileDialog">
+      <form method="dialog" class="dialog-card" id="profileForm">
+        <header>
+          <h2>Profil erstellen</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <label>
+          Name
+          <input id="profileName" required maxlength="60" />
+        </label>
+        <footer>
+          <span></span>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="saveProfileButton" value="default" type="button">Erstellen</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="importDialog">
+      <form method="dialog" class="dialog-card" id="importForm">
+        <header>
+          <h2 id="importDialogTitle">Importieren</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <input type="hidden" id="importMode" value="json" />
+        <label>
+          Datei
+          <input id="importFile" type="file" accept="application/json,.json,text/html,.html,.htm" />
+        </label>
+        <label>
+          Daten
+          <textarea id="importText" rows="8" placeholder='{"profiles":[...]}'></textarea>
+        </label>
+        <footer>
+          <span></span>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="runImportButton" value="default" type="button">Importieren</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="commandDialog">
+      <form method="dialog" class="dialog-card command-dialog" id="commandForm">
+        <header>
+          <h2>Suchen</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <input id="commandInput" type="search" placeholder="Link, Kategorie oder Notiz" autocomplete="off" />
+        <div id="commandResults" class="command-results"></div>
+      </form>
+    </dialog>
+
+    <dialog id="statusDetailDialog">
+      <form method="dialog" class="dialog-card status-detail-dialog">
+        <header>
+          <h2 id="statusDetailTitle">Status</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <div id="statusDetailBody" class="status-detail-body"></div>
+      </form>
+    </dialog>
+
+    <dialog id="adminDialog">
+      <form method="dialog" class="dialog-card" id="adminForm">
+        <header>
+          <h2 id="adminDialogTitle">Admin entsperren</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <label id="adminPasswordLabel">
+          Passwort
+          <input id="adminPassword" type="password" autocomplete="current-password" />
+        </label>
+        <footer>
+          <span></span>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="adminSubmitButton" value="default" type="button">Entsperren</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="/app.js?v=product2"></script>
+  </body>
+</html>
