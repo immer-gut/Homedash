@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.1.1 - 2026-06-05
+
+- README-Portainer-Beispiel mit `docker-compose.yml` abgeglichen.
+- Copy/Paste-Stack um `HOMEDASH_STATUS_TARGETS` und expliziten Volume-Namen ergaenzt.
+- Standard-Image-Tag auf `v1.1.1` angehoben.
+
 ## v1.1.0 - 2026-06-05
 
 - Proxmox Backup Server als eigener Status-Widget-Typ hinzugefuegt.
