@@ -517,6 +517,7 @@ function createEmptyStatus() {
 function formatStatusType(type) {
   const names = {
     proxmox: "Proxmox",
+    proxmoxbackup: "Proxmox Backup Server",
     unraid: "Unraid",
     amp: "AMP",
     homeassistant: "Home Assistant",

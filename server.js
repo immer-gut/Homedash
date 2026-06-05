@@ -222,7 +222,7 @@ function normalizeStatusWidget(widget, fallbackUrl = "") {
   const enabled = widget?.enabled === true;
   return {
     enabled,
-    type: ["basic", "proxmox", "unraid", "amp", "homeassistant"].includes(String(widget?.type || "").toLowerCase())
+    type: ["basic", "proxmox", "proxmoxbackup", "unraid", "amp", "homeassistant"].includes(String(widget?.type || "").toLowerCase())
       ? String(widget.type).toLowerCase()
       : "basic",
     url: normalizeUrl(String(widget?.url || fallbackUrl || "")),
@@ -703,6 +703,7 @@ async function readStatusTarget(target) {
 
   try {
     if (target.type === "proxmox") return await readProxmoxStatus(target, base);
+    if (target.type === "proxmoxbackup") return await readProxmoxBackupStatus(target, base);
     if (target.type === "unraid" && target.apiKey) return await readUnraidStatus(target, base);
     if (target.type === "amp" && target.username && target.password) return await readAmpStatus(target, base);
     if (target.type === "homeassistant") {
@@ -1456,6 +1457,90 @@ async function readProxmoxStatus(target, base) {
     debug: target.debug === true ? updates.debug : [],
     metrics
   };
+}
+
+async function readProxmoxBackupStatus(target, base) {
+  const headers = target.tokenId && target.tokenSecret
+    ? { Authorization: `PBSAPIToken=${target.tokenId}:${target.tokenSecret}` }
+    : {};
+  const version = await requestJson(new URL("/api2/json/version", target.url).href, { headers });
+  const metrics = [];
+  if (version.data?.version) metrics.push({ label: "Version", value: String(version.data.version) });
+
+  if (!headers.Authorization) {
+    return {
+      ...base,
+      ok: true,
+      status: "online",
+      message: "PBS API erreichbar",
+      metrics
+    };
+  }
+
+  const nodeStatus = await requestJson(new URL("/api2/json/nodes/localhost/status", target.url).href, { headers }).catch(() => null);
+  const datastoreUsage = await requestJson(new URL(target.statusPath || "/api2/json/status/datastore-usage", target.url).href, { headers }).catch(() => null);
+  const stores = extractProxmoxBackupDatastores(datastoreUsage);
+  const total = stores.reduce((sum, store) => sum + Number(store.total || 0), 0);
+  const used = stores.reduce((sum, store) => sum + Number(store.used || 0), 0);
+  const cpu = toFiniteNumber(nodeStatus?.data?.cpu);
+  const memoryUsed = toFiniteNumber(nodeStatus?.data?.memory?.used);
+  const memoryTotal = toFiniteNumber(nodeStatus?.data?.memory?.total);
+
+  metrics.push({ label: "Datastores", value: String(stores.length) });
+  if (total > 0) metrics.push({ label: "Speicher", value: `${Math.round((used / total) * 100)}%` });
+  if (cpu !== undefined) metrics.push({ label: "CPU", value: `${Math.round(cpu * 100)}%` });
+  if (memoryUsed !== undefined && memoryTotal > 0) metrics.push({ label: "RAM", value: `${Math.round((memoryUsed / memoryTotal) * 100)}%` });
+
+  return {
+    ...base,
+    ok: true,
+    status: "online",
+    message: stores.length ? "PBS online" : "PBS API erreichbar",
+    details: stores.slice(0, 4).map((store) => ({
+      label: store.name,
+      value: store.total > 0 ? `${formatPercent(store.used, store.total)} belegt` : "Datastore erreichbar",
+      memory: store.total > 0 ? `${formatBytes(store.used)} / ${formatBytes(store.total)}` : ""
+    })),
+    metrics
+  };
+}
+
+function extractProxmoxBackupDatastores(payload) {
+  const data = payload?.data ?? payload;
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.datastores)
+      ? data.datastores
+      : Array.isArray(data?.stores)
+        ? data.stores
+        : [];
+  return list
+    .map((store) => ({
+      name: String(store.store || store.name || store.datastore || "Datastore").slice(0, 80),
+      used: Number(store.used || store.disk_used || store["disk-used"] || 0),
+      total: Number(store.total || store.disk_total || store["disk-total"] || 0)
+    }))
+    .filter((store) => store.name);
+}
+
+function formatPercent(used, total) {
+  const usedNumber = Number(used);
+  const totalNumber = Number(total);
+  if (!Number.isFinite(usedNumber) || !Number.isFinite(totalNumber) || totalNumber <= 0) return "?";
+  return `${Math.round((usedNumber / totalNumber) * 100)}%`;
+}
+
+function formatBytes(value) {
+  let number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+  let unitIndex = 0;
+  while (number >= 1024 && unitIndex < units.length - 1) {
+    number /= 1024;
+    unitIndex += 1;
+  }
+  const rounded = number >= 10 || unitIndex === 0 ? Math.round(number) : Math.round(number * 10) / 10;
+  return `${rounded} ${units[unitIndex]}`;
 }
 
 async function readProxmoxUpdates(target, headers, nodes) {

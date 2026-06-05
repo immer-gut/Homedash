@@ -152,6 +152,7 @@
               <select id="linkStatusType">
                 <option value="basic">Service</option>
                 <option value="proxmox">Proxmox</option>
+                <option value="proxmoxbackup">Proxmox Backup Server</option>
                 <option value="unraid">Unraid</option>
                 <option value="amp">AMP</option>
                 <option value="homeassistant">Home Assistant</option>
@@ -161,12 +162,12 @@
               Status-URL
               <input id="linkStatusUrl" placeholder="leer = Link-URL" />
             </label>
-            <label data-status-field="proxmox">
-              Proxmox Token-ID
+            <label data-status-field="proxmox proxmoxbackup">
+              Proxmox/PBS Token-ID
               <input id="linkStatusTokenId" autocomplete="off" placeholder="root@pam!homedash" />
             </label>
-            <label data-status-field="proxmox">
-              Proxmox Token-Secret
+            <label data-status-field="proxmox proxmoxbackup">
+              Proxmox/PBS Token-Secret
               <input id="linkStatusTokenSecret" type="password" autocomplete="off" />
             </label>
             <label data-status-field="unraid homeassistant">

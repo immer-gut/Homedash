@@ -269,6 +269,15 @@ Proxmox mit API-Token:
 
 Ohne Proxmox-Token prueft Homedash nur die API-Erreichbarkeit. Mit Token zeigt es zusaetzlich Nodes, laufende VM/CT, offene Updates und RAM-Nutzung an. Die genaue APT-Update-Liste braucht in Proxmox `Sys.Modify`; falls dein Token nur `Sys.Audit` hat, nutzt Homedash automatisch die Proxmox-Paketversionen als lesbaren Fallback und zeigt die Zahl mit `+`, zum Beispiel `4+`. Unraid nutzt einen API-Key fuer `/graphql`; AMP nutzt Benutzername und Passwort fuer `Core/Login` und `Core/GetStatus`.
 
+Proxmox Backup Server mit API-Token:
+
+- Widget: `Proxmox Backup Server`
+- Status-URL: deine PBS-URL, zum Beispiel `https://<pbs-ip>:8007`
+- Token-ID: zum Beispiel `root@pam!homedash`
+- Token-Secret: dein PBS API-Token
+
+PBS nutzt einen eigenen Authorization-Header (`PBSAPIToken=TOKENID:TOKENSECRET`). Mit Token zeigt Homedash Version, Datastores, Speicherbelegung sowie optional CPU/RAM an. Fuer Datastore-Metriken braucht der Token passende PBS-Rechte, typischerweise Audit-/Read-Rechte auf den Datastore-Pfaden.
+
 Home Assistant:
 
 - Widget: `Home Assistant`
@@ -283,7 +292,7 @@ Die Suche auf der Startseite kann ausserdem direkt Google oeffnen: Suchbegriff e
 Status-Zugangsdaten werden in `homedash.json` gespeichert und sind damit auch im JSON-Export enthalten. Wenn du Secrets lieber ausschliesslich als Container-Environment halten willst, funktioniert `HOMEDASH_STATUS_TARGETS` weiterhin als Fallback:
 
 ```text
-HOMEDASH_STATUS_TARGETS=[{"type":"proxmox","name":"Proxmox","url":"https://<proxmox-ip>:8006","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"}]
+HOMEDASH_STATUS_TARGETS=[{"type":"proxmox","name":"Proxmox","url":"https://<proxmox-ip>:8006","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"},{"type":"proxmoxbackup","name":"PBS","url":"https://<pbs-ip>:8007","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"}]
 ```
 
 ## Updates
