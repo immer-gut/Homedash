@@ -1,8 +1,8 @@
 FROM node:22-alpine
 
-LABEL org.opencontainers.image.title="Homebase"
-LABEL org.opencontainers.image.description="A small Docker-friendly browser-managed startpage for home labs."
-LABEL org.opencontainers.image.source="https://github.com/sandavdesigns/homebase"
+LABEL org.opencontainers.image.title="Homedash"
+LABEL org.opencontainers.image.description="Homedash is a Docker-friendly browser-managed startpage for home labs."
+LABEL org.opencontainers.image.source="https://github.com/immer-gut/Homedash"
 LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /app

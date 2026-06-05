@@ -1,6 +1,6 @@
-# Homebase Startpage
+# Homedash Startpage
 
-Homebase ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
+Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
 ## Funktionen
 
@@ -30,7 +30,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Danach ist Homebase unter `http://localhost:3000` erreichbar. Im Heimnetz nutzt du die IP des Docker-Hosts, zum Beispiel:
+Danach ist Homedash unter `http://localhost:3000` erreichbar. Im Heimnetz nutzt du die IP des Docker-Hosts, zum Beispiel:
 
 ```text
 http://<server-ip>:3000/
@@ -40,26 +40,26 @@ Beim ersten Start erscheint ein Setup-Dialog. Dort legst du Seitentitel, erstes 
 
 ## Portainer Deploy
 
-In Portainer kannst du Homebase als Git-Stack deployen.
+In Portainer kannst du Homedash als Git-Stack deployen.
 
-- Repository URL: `https://github.com/sandavdesigns/homebase.git`
+- Repository URL: `https://github.com/immer-gut/Homedash.git`
 - Branch: `main`
 - Compose path: `docker-compose.yml`
 
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEBASE_IMAGE=ghcr.io/sandavdesigns/homebase:latest
-HOMEBASE_PORT=3000
-HOMEBASE_INTERNAL_PORT=3000
-HOMEBASE_VOLUME_NAME=homebase_data
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:latest
+HOMEDASH_PORT=3000
+HOMEDASH_INTERNAL_PORT=3000
+HOMEDASH_VOLUME_NAME=homedash_data
 ```
 
-Portainer/Docker Compose vergibt den Container-Namen automatisch mit dem Stack-Namen als Prefix. Das Daten-Volume ist aus Kompatibilitaetsgruenden standardmaessig `homebase_data`, damit bestehende Installationen ihre Daten behalten. Fuer parallele Testinstallationen setze `HOMEBASE_VOLUME_NAME` auf einen eigenen Wert, zum Beispiel `homebase_test_data`.
+Portainer/Docker Compose vergibt den Container-Namen automatisch mit dem Stack-Namen als Prefix. Das Daten-Volume ist standardmaessig `homedash_data`. Fuer parallele Testinstallationen setze `HOMEDASH_VOLUME_NAME` auf einen eigenen Wert, zum Beispiel `homedash_test_data`.
 
 Testhinweise fuer Portainer:
 
-- Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEBASE_PORT=3001` und `HOMEBASE_VOLUME_NAME=homebase_test_data`.
+- Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3001` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
 - Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren.
@@ -68,8 +68,8 @@ Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
-  homebase:
-    image: ghcr.io/sandavdesigns/homebase:latest
+  homedash:
+    image: ghcr.io/immer-gut/homedash:latest
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -79,36 +79,36 @@ services:
       DATA_DIR: /data
       ADMIN_PASSWORD:
     volumes:
-      - homebase_data:/data
+      - homedash_data:/data
 
 volumes:
-  homebase_data:
+  homedash_data:
 ```
 
 Wenn Port `3000` auf dem Host schon belegt ist, aendere nur den externen Port:
 
 ```text
-HOMEBASE_PORT=3001
+HOMEDASH_PORT=3001
 ```
 
 Die App bleibt im Container auf `3000`, ist aber extern unter `http://<server-ip>:3001/` erreichbar.
 
 ## Environment Variablen
 
-Die Compose-Datei verwendet `HOMEBASE_*` Variablen fuer Deployment-Details und setzt daraus die Container-Umgebung.
+Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und setzt daraus die Container-Umgebung.
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEBASE_IMAGE` | `ghcr.io/sandavdesigns/homebase:latest` | Docker Image fuer den Stack. Fuer reproduzierbare Deployments auf einen Versions-Tag setzen. |
-| `HOMEBASE_PORT` | `3000` | Externer Host-Port. |
-| `HOMEBASE_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
-| `HOMEBASE_VOLUME_NAME` | `homebase_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:latest` | Docker Image fuer den Stack. Fuer reproduzierbare Deployments auf einen Versions-Tag setzen. |
+| `HOMEDASH_PORT` | `3000` | Externer Host-Port. |
+| `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
+| `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
 | `ADMIN_PASSWORD` | leer | Optionales Admin-Passwort. Alternativ kann das Passwort beim ersten Start im Setup gesetzt werden. |
-| `HOMEBASE_STATUS_TARGETS` | `[]` | Optionales JSON fuer Link-Statusanzeigen. Secrets bleiben in der Container-Umgebung. |
+| `HOMEDASH_STATUS_TARGETS` | `[]` | Optionales JSON fuer Link-Statusanzeigen. Secrets bleiben in der Container-Umgebung. |
 
 Container-interne Variablen:
 
-- `PORT`: Wird von `HOMEBASE_INTERNAL_PORT` gesetzt.
+- `PORT`: Wird von `HOMEDASH_INTERNAL_PORT` gesetzt.
 - `HOST`: Wird im Container auf `0.0.0.0` gesetzt.
 - `DATA_DIR`: Wird im Container auf `/data` gesetzt.
 
@@ -117,7 +117,7 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/sandavdesigns/homebase:latest
+ghcr.io/immer-gut/homedash:latest
 ```
 
 Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `v0.1.0` erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
@@ -130,7 +130,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 
 ## Profile
 
-Profile werden direkt im Browser verwaltet. Jedes Profil hat eigene Kategorien und Links, teilt sich aber Titel, Theme, Widgets und Favicon-Cache mit der Homebase-Instanz.
+Profile werden direkt im Browser verwaltet. Jedes Profil hat eigene Kategorien und Links, teilt sich aber Titel, Theme, Widgets und Favicon-Cache mit der Homedash-Instanz.
 
 - `+ Profil` erstellt ein neues Profil.
 - `Profil löschen` entfernt das aktive Profil, solange mindestens ein weiteres Profil existiert.
@@ -139,23 +139,23 @@ Profile werden direkt im Browser verwaltet. Jedes Profil hat eigene Kategorien u
 
 ## Admin-Modus
 
-Homebase startet im Startseiten-Modus: Links und Widgets sind sichtbar, Bearbeitung bleibt verborgen. Wenn ein Admin-Passwort gesetzt ist, sind Bearbeiten, Import, Backup/Restore und Profilverwaltung gesperrt. Ueber `Admin gesperrt` kannst du entsperren. Ueber `Admin offen` sperrst du die Bearbeitung wieder.
+Homedash startet im Startseiten-Modus: Links und Widgets sind sichtbar, Bearbeitung bleibt verborgen. Wenn ein Admin-Passwort gesetzt ist, sind Bearbeiten, Import, Backup/Restore und Profilverwaltung gesperrt. Ueber `Admin gesperrt` kannst du entsperren. Ueber `Admin offen` sperrst du die Bearbeitung wieder.
 
-Der Freigabe-Modus blendet im gesperrten Zustand den Admin-Hinweis aus. Das ist fuer Familien-, Werkstatt- oder Tablet-Ansichten gedacht, bei denen Homebase wie eine ruhige Startseite wirken soll.
+Der Freigabe-Modus blendet im gesperrten Zustand den Admin-Hinweis aus. Das ist fuer Familien-, Werkstatt- oder Tablet-Ansichten gedacht, bei denen Homedash wie eine ruhige Startseite wirken soll.
 
-Das Passwort kann entweder per `ADMIN_PASSWORD` als Environment-Variable gesetzt werden oder beim ersten Start im Setup. Das Setup-Passwort wird gehasht in `homebase.json` gespeichert.
+Das Passwort kann entweder per `ADMIN_PASSWORD` als Environment-Variable gesetzt werden oder beim ersten Start im Setup. Das Setup-Passwort wird gehasht in `homedash.json` gespeichert.
 
 ## Themes
 
-Das Theme-Dropdown wechselt zwischen `Retro`, `Time Circuit`, `Dark`, `Light` und `Terminal`. Die Auswahl wird in `homebase.json` gespeichert.
+Das Theme-Dropdown wechselt zwischen `Retro`, `Time Circuit`, `Dark`, `Light` und `Terminal`. Die Auswahl wird in `homedash.json` gespeichert.
 
 ## Import, Backup und Restore
 
 Backup:
 
 - Im Browser unter `Einstellungen` ein Backup herunterladen.
-- Alternativ `http://<server-ip>:<port>/api/homebase/export` aufrufen.
-- Die Datei wird als `homebase.json` heruntergeladen.
+- Alternativ `http://<server-ip>:<port>/api/homedash/export` aufrufen.
+- Die Datei wird als `homedash.json` heruntergeladen.
 
 Restore:
 
@@ -166,33 +166,33 @@ Restore:
 Browser-Bookmarks:
 
 - HTML-Export aus dem Browser waehlen, zum Beispiel `bookmarks.html`.
-- Homebase liest Ordner als Kategorien und Lesezeichen als Links ein.
+- Homedash liest Ordner als Kategorien und Lesezeichen als Links ein.
 - Pruefe nach dem Import Kategorien, Dubletten und fehlende URLs.
 
 Die Datei liegt im Container unter:
 
 ```text
-/data/homebase.json
+/data/homedash.json
 ```
 
-Beim Schreiben normalisiert Homebase Daten wie fehlende IDs, Kategorien und URLs. Gueltige URLs duerfen mit `http://`, `https://`, `mailto:` oder `tel:` beginnen.
+Beim Schreiben normalisiert Homedash Daten wie fehlende IDs, Kategorien und URLs. Gueltige URLs duerfen mit `http://`, `https://`, `mailto:` oder `tel:` beginnen.
 
 ## Backups
 
 Wichtige Daten liegen im Docker-Volume:
 
-- `homebase.json`: Startseiten-Konfiguration
+- `homedash.json`: Startseiten-Konfiguration
 - `favicons/`: Lokaler Favicon-Cache
 
-Ein einfaches Backup ist der UI-Backup-Download im Browser. Fuer ein vollstaendiges Volume-Backup sichere das Docker-Volume aus `HOMEBASE_VOLUME_NAME`, standardmaessig `homebase_data`.
+Ein einfaches Backup ist der UI-Backup-Download im Browser. Fuer ein vollstaendiges Volume-Backup sichere das Docker-Volume aus `HOMEDASH_VOLUME_NAME`, standardmaessig `homedash_data`.
 
 Beispiel mit einem temporaeren Alpine-Container:
 
 ```bash
 docker run --rm \
-  -v homebase_data:/data:ro \
+  -v homedash_data:/data:ro \
   -v "$PWD":/backup \
-  alpine tar czf /backup/homebase_data.tar.gz -C /data .
+  alpine tar czf /backup/homedash_data.tar.gz -C /data .
 ```
 
 Restore:
@@ -200,9 +200,9 @@ Restore:
 ```bash
 docker compose down
 docker run --rm \
-  -v homebase_data:/data \
+  -v homedash_data:/data \
   -v "$PWD":/backup \
-  alpine sh -c "rm -rf /data/* && tar xzf /backup/homebase_data.tar.gz -C /data"
+  alpine sh -c "rm -rf /data/* && tar xzf /backup/homedash_data.tar.gz -C /data"
 docker compose up -d
 ```
 
@@ -219,7 +219,7 @@ Wenn ein Icon falsch oder veraltet ist:
 3. Container starten.
 4. Browser-Cache hart aktualisieren, falls das alte Icon weiterhin angezeigt wird.
 
-Wenn kein Icon geladen werden kann, zeigt Homebase ein eingebautes Fallback-Icon.
+Wenn kein Icon geladen werden kann, zeigt Homedash ein eingebautes Fallback-Icon.
 
 ## Widgets
 
@@ -259,15 +259,15 @@ Statusanzeigen werden direkt am Link gepflegt:
 - Typ auswaehlen
 - Die passenden Zugangsdaten eintragen
 
-Wenn die Status-URL leer bleibt, nutzt Homebase die normale Link-URL. Dadurch kannst du mehrere Server vom gleichen Typ als eigene Links mit eigenen Widgets pflegen.
+Wenn die Status-URL leer bleibt, nutzt Homedash die normale Link-URL. Dadurch kannst du mehrere Server vom gleichen Typ als eigene Links mit eigenen Widgets pflegen.
 
 Proxmox mit API-Token:
 
 - Widget: `Proxmox`
-- Token-ID: zum Beispiel `root@pam!homebase`
+- Token-ID: zum Beispiel `root@pam!homedash`
 - Token-Secret: dein Proxmox API-Token
 
-Ohne Proxmox-Token prueft Homebase nur die API-Erreichbarkeit. Mit Token zeigt es zusaetzlich Nodes, laufende VM/CT, offene Updates und RAM-Nutzung an. Die genaue APT-Update-Liste braucht in Proxmox `Sys.Modify`; falls dein Token nur `Sys.Audit` hat, nutzt Homebase automatisch die Proxmox-Paketversionen als lesbaren Fallback und zeigt die Zahl mit `+`, zum Beispiel `4+`. Unraid nutzt einen API-Key fuer `/graphql`; AMP nutzt Benutzername und Passwort fuer `Core/Login` und `Core/GetStatus`.
+Ohne Proxmox-Token prueft Homedash nur die API-Erreichbarkeit. Mit Token zeigt es zusaetzlich Nodes, laufende VM/CT, offene Updates und RAM-Nutzung an. Die genaue APT-Update-Liste braucht in Proxmox `Sys.Modify`; falls dein Token nur `Sys.Audit` hat, nutzt Homedash automatisch die Proxmox-Paketversionen als lesbaren Fallback und zeigt die Zahl mit `+`, zum Beispiel `4+`. Unraid nutzt einen API-Key fuer `/graphql`; AMP nutzt Benutzername und Passwort fuer `Core/Login` und `Core/GetStatus`.
 
 Home Assistant:
 
@@ -276,14 +276,14 @@ Home Assistant:
 - API-Key / Long-Lived Token: in Home Assistant unter Profil -> Sicherheit -> Long-Lived Access Tokens erstellen
 - HA Schalter: Entity-IDs fuer kleine Buttons, zum Beispiel `switch.steckdose, light.schreibtisch`
 
-Homebase liest damit `/api/`, `/api/config` und `/api/states` und zeigt Version, Entities sowie deine konfigurierten Schalter an. Button-Klicks laufen ueber den Homebase-Server, der Token wird also nicht an den Browser ausgegeben.
+Homedash liest damit `/api/`, `/api/config` und `/api/states` und zeigt Version, Entities sowie deine konfigurierten Schalter an. Button-Klicks laufen ueber den Homedash-Server, der Token wird also nicht an den Browser ausgegeben.
 
 Die Suche auf der Startseite kann ausserdem direkt Google oeffnen: Suchbegriff eingeben und `Enter` druecken. In der Befehlspalette (`Cmd/Ctrl + K`) erscheint bei Suchtext ebenfalls ein Google-Treffer.
 
-Status-Zugangsdaten werden in `homebase.json` gespeichert und sind damit auch im JSON-Export enthalten. Wenn du Secrets lieber ausschliesslich als Container-Environment halten willst, funktioniert `HOMEBASE_STATUS_TARGETS` weiterhin als Fallback:
+Status-Zugangsdaten werden in `homedash.json` gespeichert und sind damit auch im JSON-Export enthalten. Wenn du Secrets lieber ausschliesslich als Container-Environment halten willst, funktioniert `HOMEDASH_STATUS_TARGETS` weiterhin als Fallback:
 
 ```text
-HOMEBASE_STATUS_TARGETS=[{"type":"proxmox","name":"Proxmox","url":"https://<proxmox-ip>:8006","tokenId":"root@pam!homebase","tokenSecret":"dein-token-secret"}]
+HOMEDASH_STATUS_TARGETS=[{"type":"proxmox","name":"Proxmox","url":"https://<proxmox-ip>:8006","tokenId":"root@pam!homedash","tokenSecret":"dein-token-secret"}]
 ```
 
 ## Updates
@@ -302,7 +302,7 @@ Portainer Update:
 2. `Pull latest image/redeploy` oder `Update the stack` ausfuehren.
 3. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 
-Das Daten-Volume bleibt bei normalen Updates erhalten. Loesche das Volume nur, wenn du bewusst alle Homebase-Daten entfernen willst.
+Das Daten-Volume bleibt bei normalen Updates erhalten. Loesche das Volume nur, wenn du bewusst alle Homedash-Daten entfernen willst.
 
 Nach dem Update:
 

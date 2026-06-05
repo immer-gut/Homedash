@@ -1,6 +1,6 @@
 const state = {
   setupComplete: true,
-  title: "Homebase",
+  title: "Homedash",
   subtitle: "",
   theme: "retro",
   activeProfileId: "default",
@@ -184,7 +184,7 @@ function updateClock() {
 }
 
 async function loadData() {
-  const response = await fetch("/api/homebase");
+  const response = await fetch("/api/homedash");
   if (!response.ok) throw new Error("Startseite konnte nicht geladen werden.");
   Object.assign(state, await response.json());
   syncActiveProfileAliases();
@@ -206,7 +206,7 @@ async function saveData(message = "Gespeichert") {
     return;
   }
   syncProfileFromAliases();
-  const response = await fetch("/api/homebase", {
+  const response = await fetch("/api/homedash", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -278,7 +278,7 @@ function syncProfileFromAliases() {
 }
 
 function render() {
-  document.title = state.title || "Homebase";
+  document.title = state.title || "Homedash";
   document.body.dataset.theme = state.theme || "retro";
   elements.title.textContent = state.title;
   elements.subtitle.textContent = state.subtitle;
@@ -1421,8 +1421,8 @@ function openImportDialog(mode = "json") {
 function downloadBackup() {
   if (!canEdit()) return openAdminDialog();
   const link = document.createElement("a");
-  link.href = "/api/homebase/export";
-  link.download = "homebase.json";
+  link.href = "/api/homedash/export";
+  link.download = "homedash.json";
   document.body.append(link);
   link.click();
   link.remove();
@@ -1536,7 +1536,7 @@ async function completeSetup() {
   syncActiveProfileAliases();
   render();
   elements.setupDialog.close();
-  showToast("Homebase eingerichtet");
+  showToast("Homedash eingerichtet");
 }
 
 async function toggleAdmin() {

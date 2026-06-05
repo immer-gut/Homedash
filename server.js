@@ -7,11 +7,11 @@ const crypto = require("crypto");
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
 const DATA_DIR = process.env.DATA_DIR || "/data";
-const DATA_FILE = path.join(DATA_DIR, "homebase.json");
+const DATA_FILE = path.join(DATA_DIR, "homedash.json");
 const FAVICON_DIR = path.join(DATA_DIR, "favicons");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const STATUS_TARGETS = parseStatusTargets(process.env.HOMEBASE_STATUS_TARGETS || "[]");
+const STATUS_TARGETS = parseStatusTargets(process.env.HOMEDASH_STATUS_TARGETS || "[]");
 const sessions = new Map();
 
 const defaultCategories = [
@@ -27,7 +27,7 @@ const defaultCategories = [
 const defaultData = {
   schemaVersion: 5,
   setupComplete: false,
-  title: "Homebase",
+  title: "Homedash",
   subtitle: "Deine Startseite fuer Links, Profile und kleine Widgets",
   theme: "retro",
   activeProfileId: "default",
@@ -336,7 +336,7 @@ function parseCookies(req) {
 function isAuthed(req) {
   const data = readDataWithoutMigration();
   if (!ADMIN_PASSWORD && !data.admin?.passwordHash) return true;
-  const sessionId = parseCookies(req).homebase_session;
+  const sessionId = parseCookies(req).homedash_session;
   const session = sessionId ? sessions.get(sessionId) : null;
   if (!session) return false;
   if (session.expiresAt < Date.now()) {
@@ -372,11 +372,11 @@ function verifyPassword(password, storedHash) {
 }
 
 function setSessionCookie(res, sessionId) {
-  res.setHeader("Set-Cookie", `homebase_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+  res.setHeader("Set-Cookie", `homedash_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
 }
 
 function clearSessionCookie(res) {
-  res.setHeader("Set-Cookie", "homebase_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
+  res.setHeader("Set-Cookie", "homedash_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
 }
 
 function toPublicData(data, req) {
@@ -652,7 +652,7 @@ function parseStatusTargets(raw) {
       }))
       .filter((target) => target.url && parseHttpUrl(target.url));
   } catch (error) {
-    console.error(`HOMEBASE_STATUS_TARGETS konnte nicht gelesen werden: ${error.message}`);
+    console.error(`HOMEDASH_STATUS_TARGETS konnte nicht gelesen werden: ${error.message}`);
     return [];
   }
 }
@@ -800,7 +800,7 @@ async function readUnraidStatus(target, base) {
   const response = await requestJsonPost(new URL(target.statusPath || "/graphql", target.url).href, {
     headers: { "x-api-key": target.apiKey },
     body: {
-      query: `query HomebaseStatus {
+      query: `query HomedashStatus {
         info {
           os { distro release uptime }
           cpu { cores threads }
@@ -1614,7 +1614,7 @@ function requestJsonPost(targetUrl, { headers = {}, body = {} } = {}) {
           Accept: "application/json,*/*",
           "Content-Type": "application/json",
           "Content-Length": Buffer.byteLength(payload),
-          "User-Agent": "Homebase/1.0",
+          "User-Agent": "Homedash/1.0",
           ...headers
         },
         rejectUnauthorized: false,
@@ -1656,7 +1656,7 @@ function requestBuffer(targetUrl, { accept, limit, headers = {} }) {
     const request = transport.request(
       parsed,
       {
-        headers: { Accept: accept, "User-Agent": "Homebase/1.0", ...headers },
+        headers: { Accept: accept, "User-Agent": "Homedash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout: 5000
       },
@@ -1708,7 +1708,7 @@ function requestText(targetUrl, { accept, limit, headers = {} }) {
     const request = transport.request(
       parsed,
       {
-        headers: { Accept: accept, "User-Agent": "Homebase/1.0", ...headers },
+        headers: { Accept: accept, "User-Agent": "Homedash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout: 5000
       },
@@ -1765,7 +1765,7 @@ function requestHead(targetUrl, headers = {}) {
       parsed,
       {
         method: "HEAD",
-        headers: { "User-Agent": "Homebase/1.0", ...headers },
+        headers: { "User-Agent": "Homedash/1.0", ...headers },
         rejectUnauthorized: false,
         timeout: 5000
       },
@@ -1852,12 +1852,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (url.pathname === "/api/homebase" && req.method === "GET") {
+    if (url.pathname === "/api/homedash" && req.method === "GET") {
       sendJson(res, 200, toPublicData(readData(), req));
       return;
     }
 
-    if (url.pathname === "/api/homebase" && req.method === "PUT") {
+    if (url.pathname === "/api/homedash" && req.method === "PUT") {
       if (!requireAuth(req, res)) return;
       const body = await readRequestBody(req);
       const saved = writeData(JSON.parse(body));
@@ -1926,7 +1926,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/auth/logout" && req.method === "POST") {
-      const sessionId = parseCookies(req).homebase_session;
+      const sessionId = parseCookies(req).homedash_session;
       if (sessionId) sessions.delete(sessionId);
       clearSessionCookie(res);
       const data = readData();
@@ -1972,12 +1972,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (url.pathname === "/api/homebase/export" && req.method === "GET") {
+    if (url.pathname === "/api/homedash/export" && req.method === "GET") {
       if (!requireAuth(req, res)) return;
       const data = JSON.stringify(readData(), null, 2);
       res.writeHead(200, {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": "attachment; filename=homebase.json"
+        "Content-Disposition": "attachment; filename=homedash.json"
       });
       res.end(data);
       return;
@@ -2001,5 +2001,5 @@ const server = http.createServer(async (req, res) => {
 
 ensureDataFile();
 server.listen(PORT, HOST, () => {
-  console.log(`Homebase running on http://${HOST}:${PORT}`);
+  console.log(`Homedash running on http://${HOST}:${PORT}`);
 });

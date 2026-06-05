@@ -1,4 +1,4 @@
 services:
-  homebase:
+  homedash:
     build: .
-    image: ${HOMEBASE_IMAGE:-ghcr.io/sandavdesigns/homebase:local}
+    image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:local}
