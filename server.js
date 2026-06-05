@@ -95,16 +95,65 @@ function readData() {
 function writeData(data) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const existing = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) : {};
+  const mergedData = preserveExistingStatusSecrets(data, existing);
   const safeData = normalizeData({
-    ...data,
+    ...mergedData,
     admin: {
       ...existing.admin,
-      ...data.admin
+      ...mergedData.admin
     },
-    schemaVersion: data.schemaVersion || 5
+    schemaVersion: mergedData.schemaVersion || 5
   });
   fs.writeFileSync(DATA_FILE, `${JSON.stringify(safeData, null, 2)}\n`);
   return safeData;
+}
+
+function preserveExistingStatusSecrets(incoming, existing) {
+  const existingWidgets = new Map();
+  for (const profile of Array.isArray(existing.profiles) ? existing.profiles : []) {
+    for (const link of Array.isArray(profile.links) ? profile.links : []) {
+      if (link.id && link.statusWidget) existingWidgets.set(String(link.id), link.statusWidget);
+    }
+  }
+  for (const link of Array.isArray(existing.links) ? existing.links : []) {
+    if (link.id && link.statusWidget && !existingWidgets.has(String(link.id))) {
+      existingWidgets.set(String(link.id), link.statusWidget);
+    }
+  }
+
+  const mergeLink = (link) => {
+    if (!link?.id || !link.statusWidget) return link;
+    const existingWidget = existingWidgets.get(String(link.id));
+    if (!existingWidget || String(existingWidget.type || "basic").toLowerCase() !== String(link.statusWidget.type || "basic").toLowerCase()) {
+      return link;
+    }
+    return {
+      ...link,
+      statusWidget: preserveStatusWidgetSecrets(link.statusWidget, existingWidget)
+    };
+  };
+
+  return {
+    ...incoming,
+    profiles: Array.isArray(incoming.profiles)
+      ? incoming.profiles.map((profile) => ({
+          ...profile,
+          links: Array.isArray(profile.links) ? profile.links.map(mergeLink) : profile.links
+        }))
+      : incoming.profiles,
+    links: Array.isArray(incoming.links) ? incoming.links.map(mergeLink) : incoming.links
+  };
+}
+
+function preserveStatusWidgetSecrets(incoming, existing) {
+  const fields = ["tokenId", "tokenSecret", "apiKey", "username", "password", "headerValue"];
+  const merged = { ...incoming };
+  for (const field of fields) {
+    if (String(merged[field] || "") === "" && String(existing[field] || "") !== "") {
+      merged[field] = existing[field];
+    }
+  }
+  return merged;
 }
 
 function normalizeData(data) {

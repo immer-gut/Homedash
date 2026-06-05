@@ -1544,7 +1544,7 @@ async function toggleAdmin() {
   if (state.auth?.enabled && state.auth?.authenticated) {
     const response = await fetch("/api/auth/logout", { method: "POST" });
     state.auth = await response.json();
-    render();
+    await loadData();
     showToast("Admin gesperrt");
     return;
   }
@@ -1565,8 +1565,8 @@ async function submitAdmin() {
   });
   if (!response.ok) throw new Error("Passwort stimmt nicht");
   state.auth = await response.json();
-  render();
   elements.adminDialog.close();
+  await loadData();
   showToast("Admin entsperrt");
 }
 
