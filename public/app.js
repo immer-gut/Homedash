@@ -791,10 +791,11 @@ function createLinkStatus(status) {
 
   const metrics = document.createElement("div");
   metrics.className = "link-status-metrics";
+  const metricLimit = status.type === "proxmoxbackup" ? 8 : 5;
   const metricItems = (Array.isArray(status.metrics) ? status.metrics : [])
     .filter((metric) => String(metric.label).toLowerCase() !== "user")
     .filter((metric) => !isHomeAssistant || String(metric.label).toLowerCase() !== "version")
-    .slice(0, 5);
+    .slice(0, metricLimit);
   metrics.replaceChildren(...metricItems.map((metric) => {
     const item = document.createElement("span");
     const metricKind = getStatusMetricKind(metric.label);

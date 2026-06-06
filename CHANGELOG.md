@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.2.0 - 2026-06-06
+
+- Proxmox Backup Server Widget um letzte Snapshots/Backups erweitert.
+- PBS Task-Auswertung fuer laufende Jobs, fehlgeschlagene Tasks und Verify-Hinweise ergaenzt.
+- PBS Linkkarten duerfen mehr Metriken anzeigen, damit neue Backup-/Fehlerwerte CPU/RAM nicht verdraengen.
+- Standard-Image-Tag auf `v1.2.0` angehoben.
+
 ## v1.1.1 - 2026-06-05
 
 - README-Portainer-Beispiel mit `docker-compose.yml` abgeglichen.
