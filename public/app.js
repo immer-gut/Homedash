@@ -12,6 +12,7 @@ const state = {
   auth: { enabled: false, authenticated: true },
   status: { configured: 0, updatedAt: "", items: [] },
   weather: { enabled: false },
+  app: { name: "Homedash", version: "" },
   statusLoading: false,
   weatherLoading: false,
   query: "",
@@ -21,6 +22,7 @@ const state = {
 const elements = {
   title: document.querySelector("#pageTitle"),
   subtitle: document.querySelector("#pageSubtitle"),
+  appVersion: document.querySelector("#appVersion"),
   date: document.querySelector("#dateLabel"),
   time: document.querySelector("#timeLabel"),
   groups: document.querySelector("#groups"),
@@ -282,6 +284,7 @@ function render() {
   document.body.dataset.theme = state.theme || "retro";
   elements.title.textContent = state.title;
   elements.subtitle.textContent = state.subtitle;
+  elements.appVersion.textContent = state.app?.version ? `v${state.app.version}` : "";
   elements.themeSelect.value = state.theme || "retro";
   renderAdminState();
   renderProfiles();

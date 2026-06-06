@@ -12,6 +12,7 @@ const FAVICON_DIR = path.join(DATA_DIR, "favicons");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const STATUS_TARGETS = parseStatusTargets(process.env.HOMEDASH_STATUS_TARGETS || "[]");
+const APP_VERSION = readAppVersion();
 const sessions = new Map();
 
 const defaultCategories = [
@@ -434,6 +435,10 @@ function toPublicData(data, req) {
   const publicData = authenticated ? data : redactStatusSecrets(data);
   return {
     ...publicData,
+    app: {
+      name: "Homedash",
+      version: APP_VERSION
+    },
     admin: {
       ...publicAdmin,
       enabled: Boolean(ADMIN_PASSWORD || passwordHash)
@@ -443,6 +448,15 @@ function toPublicData(data, req) {
       authenticated
     }
   };
+}
+
+function readAppVersion() {
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json"), "utf8"));
+    return String(packageJson.version || "0.0.0");
+  } catch {
+    return "0.0.0";
+  }
 }
 
 function redactStatusSecrets(data) {

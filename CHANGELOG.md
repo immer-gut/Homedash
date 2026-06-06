@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.2.2 - 2026-06-06
+
+- Versionsanzeige in der Weboberflaeche ergaenzt.
+- App-Version wird serverseitig aus `package.json` gelesen und an das Frontend ausgeliefert.
+- Standard-Image-Tag auf `v1.2.2` angehoben.
+
 ## v1.2.1 - 2026-06-06
 
 - PBS Snapshot-Auswertung auf Root- und Unter-Namespaces erweitert.
