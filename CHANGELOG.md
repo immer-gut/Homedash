@@ -2,6 +2,11 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.3.1 - 2026-06-06
+
+- Ausgeblendete Kategorien werden nicht mehr als leere Kategorien auf der Startseite angezeigt.
+- Standard-Image-Tag auf `v1.3.1` angehoben.
+
 ## v1.3.0 - 2026-06-06
 
 - Kategorie-Sichtbarkeit im Kategorien-Dialog ergaenzt.

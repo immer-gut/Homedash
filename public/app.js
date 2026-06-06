@@ -607,6 +607,7 @@ function renderGroups() {
   }, new Map());
   if (!query) {
     for (const category of getCategoryNames()) {
+      if (!isCategoryVisible(category)) continue;
       if (!grouped.has(category)) grouped.set(category, []);
     }
   }
