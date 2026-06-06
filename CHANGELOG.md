@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.2.1 - 2026-06-06
+
+- PBS Snapshot-Auswertung auf Root- und Unter-Namespaces erweitert.
+- Letztes Backup beruecksichtigt jetzt Snapshots aus allen sichtbaren PBS-Namespaces.
+- Standard-Image-Tag auf `v1.2.1` angehoben.
+
 ## v1.2.0 - 2026-06-06
 
 - Proxmox Backup Server Widget um letzte Snapshots/Backups erweitert.

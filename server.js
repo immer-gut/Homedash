@@ -1580,13 +1580,59 @@ async function readProxmoxBackupTasks(target, headers) {
 
 async function readProxmoxBackupSnapshots(target, headers, stores) {
   const snapshots = (await Promise.all(stores.slice(0, 6).map(async (store) => {
-    const payload = await requestJson(new URL(`/api2/json/admin/datastore/${encodeURIComponent(store.name)}/snapshots`, target.url).href, { headers }).catch(() => null);
-    const data = payload?.data ?? payload;
-    return (Array.isArray(data) ? data : []).map((snapshot) => normalizeProxmoxBackupSnapshot(snapshot, store.name));
+    const namespaces = await readProxmoxBackupNamespaces(target, headers, store.name);
+    return (await Promise.all(namespaces.map(async (namespace) => {
+      const url = new URL(`/api2/json/admin/datastore/${encodeURIComponent(store.name)}/snapshots`, target.url);
+      if (namespace) url.searchParams.set("ns", namespace);
+      const payload = await requestJson(url.href, { headers }).catch(() => null);
+      const data = payload?.data ?? payload;
+      return (Array.isArray(data) ? data : []).map((snapshot) => normalizeProxmoxBackupSnapshot(snapshot, store.name, namespace));
+    }))).flat();
   }))).flat();
   return snapshots
     .filter((snapshot) => snapshot.time)
     .sort((a, b) => b.time - a.time);
+}
+
+async function readProxmoxBackupNamespaces(target, headers, storeName) {
+  const seen = new Set([""]);
+  const queue = [""];
+  while (queue.length) {
+    const parent = queue.shift();
+    const url = new URL(`/api2/json/admin/datastore/${encodeURIComponent(storeName)}/namespace`, target.url);
+    if (parent) url.searchParams.set("ns", parent);
+    const payload = await requestJson(url.href, { headers }).catch(() => null);
+    const data = payload?.data ?? payload;
+    for (const child of extractProxmoxBackupNamespaceChildren(data, parent)) {
+      if (!seen.has(child) && child.split("/").length <= 8) {
+        seen.add(child);
+        queue.push(child);
+      }
+    }
+  }
+  return [...seen];
+}
+
+function extractProxmoxBackupNamespaceChildren(data, parent) {
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.namespaces)
+      ? data.namespaces
+      : Array.isArray(data?.children)
+        ? data.children
+        : [];
+  return list
+    .map((entry) => normalizeProxmoxBackupNamespace(entry, parent))
+    .filter(Boolean);
+}
+
+function normalizeProxmoxBackupNamespace(entry, parent) {
+  const raw = typeof entry === "string"
+    ? entry
+    : entry?.ns || entry?.namespace || entry?.path || entry?.name || entry?.id || "";
+  const value = String(raw || "").replace(/^\/+|\/+$/g, "");
+  if (!value) return "";
+  return value.includes("/") || !parent ? value : `${parent}/${value}`;
 }
 
 function normalizeProxmoxBackupTask(task) {
@@ -1601,16 +1647,18 @@ function normalizeProxmoxBackupTask(task) {
   };
 }
 
-function normalizeProxmoxBackupSnapshot(snapshot, store) {
+function normalizeProxmoxBackupSnapshot(snapshot, store, namespace = "") {
   const backupType = String(snapshot?.["backup-type"] || snapshot?.backupType || snapshot?.backup_type || "");
   const backupId = String(snapshot?.["backup-id"] || snapshot?.backupId || snapshot?.backup_id || "");
   const backupTime = Number(snapshot?.["backup-time"] || snapshot?.backupTime || snapshot?.backup_time || snapshot?.time || 0);
+  const ns = String(snapshot?.ns || snapshot?.namespace || namespace || "").replace(/^\/+|\/+$/g, "");
   return {
     store,
+    namespace: ns,
     type: backupType,
     id: backupId,
     time: backupTime,
-    label: [store, backupType, backupId].filter(Boolean).join(" / ")
+    label: [store, ns, backupType, backupId].filter(Boolean).join(" / ")
   };
 }
 
