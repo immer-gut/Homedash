@@ -60,7 +60,7 @@ const defaultData = {
     {
       id: "default",
       name: "Privat",
-      categories: [{ id: crypto.randomUUID(), name: "Links", icon: "star", color: "#35f0ff" }],
+      categories: [{ id: crypto.randomUUID(), name: "Links", icon: "star", color: "#35f0ff", visible: true }],
       links: []
     }
   ]
@@ -305,7 +305,8 @@ function normalizeCategories(categories, links) {
       id: String(category.id || crypto.randomUUID()),
       name: String(category.name || "").trim().slice(0, 40),
       icon: normalizeCategoryIcon(category.icon),
-      color: normalizeCategoryColor(category.color)
+      color: normalizeCategoryColor(category.color),
+      visible: category.visible !== false
     }))
     .filter((category) => {
       if (!category.name || seen.has(category.name)) return false;
@@ -315,7 +316,7 @@ function normalizeCategories(categories, links) {
 
   for (const link of links) {
     if (!seen.has(link.category)) {
-      normalizedCategories.push({ id: crypto.randomUUID(), name: link.category, icon: "folder", color: "#35f0ff" });
+      normalizedCategories.push({ id: crypto.randomUUID(), name: link.category, icon: "folder", color: "#35f0ff", visible: true });
       seen.add(link.category);
     }
   }

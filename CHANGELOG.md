@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.3.0 - 2026-06-06
+
+- Kategorie-Sichtbarkeit im Kategorien-Dialog ergaenzt.
+- Ausgeblendete Kategorien bleiben gespeichert und koennen weiter Status-Widgets liefern, werden aber nicht mehr als Linkkarten auf der Startseite angezeigt.
+- Standard-Image-Tag auf `v1.3.0` angehoben.
+
 ## v1.2.2 - 2026-06-06
 
 - Versionsanzeige in der Weboberflaeche ergaenzt.

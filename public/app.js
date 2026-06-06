@@ -596,6 +596,7 @@ function renderGroups() {
   const compactLayout = state.preferences?.compactCategoryLayout === true;
   elements.groups.classList.toggle("is-compact", compactLayout);
   const links = state.links.filter((link) => {
+    if (!isCategoryVisible(link.category || "Links")) return false;
     const haystack = `${link.title} ${link.category} ${link.note}`.toLowerCase();
     return !query || haystack.includes(query);
   });
@@ -691,8 +692,13 @@ function getCategoryMeta(name) {
   const category = (state.categories || []).find((candidate) => candidate.name === name) || {};
   return {
     icon: category.icon || "folder",
-    color: normalizeColor(category.color || "#35f0ff")
+    color: normalizeColor(category.color || "#35f0ff"),
+    visible: category.visible !== false
   };
+}
+
+function isCategoryVisible(name) {
+  return getCategoryMeta(name).visible !== false;
 }
 
 function normalizeColor(color) {
@@ -1056,7 +1062,8 @@ function openCategoriesDialog() {
       originalName: name,
       name,
       icon: category?.icon || "folder",
-      color: normalizeColor(category?.color || "#35f0ff")
+      color: normalizeColor(category?.color || "#35f0ff"),
+      visible: category?.visible !== false
     };
   });
   renderCategoryEditor();
@@ -1101,6 +1108,17 @@ function renderCategoryEditor(focusId = "") {
       color.addEventListener("input", (event) => {
         category.color = event.target.value;
       });
+      const visibleLabel = document.createElement("label");
+      visibleLabel.className = "category-visible";
+      const visible = document.createElement("input");
+      visible.type = "checkbox";
+      visible.checked = category.visible !== false;
+      visible.addEventListener("change", (event) => {
+        category.visible = event.target.checked;
+      });
+      const visibleText = document.createElement("span");
+      visibleText.textContent = "Anzeigen";
+      visibleLabel.append(visible, visibleText);
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "danger subtle-danger";
@@ -1109,7 +1127,7 @@ function renderCategoryEditor(focusId = "") {
         categoryDrafts = categoryDrafts.filter((candidate) => candidate.id !== category.id);
         renderCategoryEditor();
       });
-      row.append(input, iconSelect, color, remove);
+      row.append(input, iconSelect, color, visibleLabel, remove);
       if (category.id === focusId) {
         window.requestAnimationFrame(() => {
           input.focus();
@@ -1123,7 +1141,7 @@ function renderCategoryEditor(focusId = "") {
 
 function addCategory() {
   const id = createId();
-  categoryDrafts.push({ id, originalName: "", name: "", icon: "folder", color: categoryColors[categoryDrafts.length % categoryColors.length] });
+  categoryDrafts.push({ id, originalName: "", name: "", icon: "folder", color: categoryColors[categoryDrafts.length % categoryColors.length], visible: true });
   renderCategoryEditor(id);
 }
 
@@ -1135,7 +1153,8 @@ async function saveCategories() {
       originalName: category.originalName,
       name: category.name.trim(),
       icon: category.icon || "folder",
-      color: normalizeColor(category.color)
+      color: normalizeColor(category.color),
+      visible: category.visible !== false
     }))
     .filter((category) => {
       if (!category.name || seen.has(category.name)) return false;
@@ -1153,9 +1172,9 @@ async function saveCategories() {
     return link;
   });
   if (state.links.some((link) => link.category === "Links") && !nextNames.has("Links")) {
-    nextCategories.push({ id: createId(), name: "Links", icon: "link", color: "#35f0ff" });
+    nextCategories.push({ id: createId(), name: "Links", icon: "link", color: "#35f0ff", visible: true });
   }
-  state.categories = nextCategories.map(({ id, name, icon, color }) => ({ id, name, icon, color })).sort((a, b) => compareNames(a.name, b.name));
+  state.categories = nextCategories.map(({ id, name, icon, color, visible }) => ({ id, name, icon, color, visible })).sort((a, b) => compareNames(a.name, b.name));
   await saveData("Kategorien gespeichert");
   elements.categoriesDialog.close();
 }
@@ -1169,7 +1188,8 @@ function upsertCategoryFromLink(name) {
     id: createId(),
     name: categoryName,
     icon: "folder",
-    color: categoryColors[state.categories.length % categoryColors.length]
+    color: categoryColors[state.categories.length % categoryColors.length],
+    visible: true
   });
   state.categories.sort((a, b) => compareNames(a.name, b.name));
   return categoryName;
@@ -1335,7 +1355,7 @@ async function saveProfile() {
   const name = elements.profileName.value.trim();
   if (!name) return;
   const id = createId();
-  state.profiles.push({ id, name, categories: [{ id: createId(), name: "Links", icon: "link", color: "#35f0ff" }], links: [] });
+  state.profiles.push({ id, name, categories: [{ id: createId(), name: "Links", icon: "link", color: "#35f0ff", visible: true }], links: [] });
   state.activeProfileId = id;
   syncActiveProfileAliases();
   await saveData("Profil erstellt");
@@ -1360,10 +1380,10 @@ async function createDemoProfile() {
     id: "demo",
     name: "Demo",
     categories: [
-      { id: createId(), name: "Business", icon: "briefcase", color: "#ffb238" },
-      { id: createId(), name: "Gameserver", icon: "game", color: "#56ff8f" },
-      { id: createId(), name: "Netzwerk", icon: "network", color: "#35f0ff" },
-      { id: createId(), name: "Medien", icon: "media", color: "#4aa8ff" }
+      { id: createId(), name: "Business", icon: "briefcase", color: "#ffb238", visible: true },
+      { id: createId(), name: "Gameserver", icon: "game", color: "#56ff8f", visible: true },
+      { id: createId(), name: "Netzwerk", icon: "network", color: "#35f0ff", visible: true },
+      { id: createId(), name: "Medien", icon: "media", color: "#4aa8ff", visible: true }
     ],
     links: [
       createDemoLink("Rechnungstool", "https://example.com/business", "Business", "Demo-Link ohne private Daten"),
@@ -1485,7 +1505,7 @@ async function importBookmarks(html) {
   if (!nextLinks.length) throw new Error("Keine neuen Bookmarks gefunden");
   state.categories = [...knownCategories].map((name) => {
     const existing = state.categories.find((category) => category.name === name);
-    return existing || { id: createId(), name, icon: "folder", color: categoryColors[state.categories.length % categoryColors.length] };
+    return existing || { id: createId(), name, icon: "folder", color: categoryColors[state.categories.length % categoryColors.length], visible: true };
   }).sort((a, b) => compareNames(a.name, b.name));
   state.links = [...state.links, ...nextLinks];
   await saveData("Bookmarks importiert");

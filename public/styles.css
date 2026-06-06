@@ -1671,13 +1671,28 @@ dialog::backdrop {
 
 .category-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(120px, 0.45fr) 46px auto;
+  grid-template-columns: minmax(160px, 1fr) minmax(120px, 0.45fr) 46px auto auto;
   gap: 8px;
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 8px;
   background: rgba(255, 255, 255, 0.055);
+}
+
+.category-visible {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 
 .category-row input[type="color"] {
