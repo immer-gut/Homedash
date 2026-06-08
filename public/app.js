@@ -7,6 +7,7 @@ const state = {
   profiles: [],
   categories: [],
   links: [],
+  statusTargets: [],
   widgets: { clock: true, notes: [], statusOverview: false, linkStats: false, weather: { enabled: false, label: "Zuhause", latitude: "", longitude: "" } },
   preferences: { startpageMode: true, shareMode: false, showCategoryCounts: false, compactCategoryLayout: false, showLinkStatus: true, showNotes: true, openLinksInNewTab: true },
   auth: { enabled: false, authenticated: true },
@@ -33,6 +34,7 @@ const elements = {
   searchToggleButton: document.querySelector("#searchToggleButton"),
   googleSearchButton: document.querySelector("#googleSearchButton"),
   addButton: document.querySelector("#addButton"),
+  addWidgetButton: document.querySelector("#addWidgetButton"),
   newNoteButton: document.querySelector("#newNoteButton"),
   settingsButton: document.querySelector("#settingsButton"),
   adminButton: document.querySelector("#adminButton"),
@@ -62,6 +64,7 @@ const elements = {
   setupPassword: document.querySelector("#setupPassword"),
   completeSetupButton: document.querySelector("#completeSetupButton"),
   editorDialog: document.querySelector("#editorDialog"),
+  statusWidgetDialog: document.querySelector("#statusWidgetDialog"),
   settingsDialog: document.querySelector("#settingsDialog"),
   categoriesDialog: document.querySelector("#categoriesDialog"),
   categoriesForm: document.querySelector("#categoriesForm"),
@@ -96,6 +99,12 @@ const elements = {
   saveLinkButton: document.querySelector("#saveLinkButton"),
   testLinkButton: document.querySelector("#testLinkButton"),
   linkStatus: document.querySelector("#linkStatus"),
+  statusWidgetForm: document.querySelector("#statusWidgetForm"),
+  statusWidgetDialogTitle: document.querySelector("#statusWidgetDialogTitle"),
+  statusTargetId: document.querySelector("#statusTargetId"),
+  statusTargetName: document.querySelector("#statusTargetName"),
+  deleteStatusTargetButton: document.querySelector("#deleteStatusTargetButton"),
+  saveStatusTargetButton: document.querySelector("#saveStatusTargetButton"),
   settingsForm: document.querySelector("#settingsForm"),
   settingsTitle: document.querySelector("#settingsTitle"),
   settingsSubtitle: document.querySelector("#settingsSubtitle"),
@@ -166,7 +175,8 @@ function activeProfile() {
     id: "default",
     name: "Start",
     categories: [],
-    links: []
+    links: [],
+    statusTargets: []
   };
 }
 
@@ -200,6 +210,7 @@ function syncActiveProfileAliases() {
   const profile = activeProfile();
   state.categories = profile.categories || [];
   state.links = profile.links || [];
+  state.statusTargets = profile.statusTargets || [];
 }
 
 async function saveData(message = "Gespeichert") {
@@ -212,7 +223,7 @@ async function saveData(message = "Gespeichert") {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      schemaVersion: state.schemaVersion || 5,
+      schemaVersion: state.schemaVersion || 6,
       setupComplete: state.setupComplete,
       title: state.title,
       subtitle: state.subtitle,
@@ -273,7 +284,8 @@ function syncProfileFromAliases() {
   const nextProfile = {
     ...activeProfile(),
     categories: state.categories,
-    links: state.links
+    links: state.links,
+    statusTargets: state.statusTargets
   };
   if (index >= 0) state.profiles.splice(index, 1, nextProfile);
   else state.profiles.push(nextProfile);
@@ -435,7 +447,19 @@ function createStatusCard(item) {
   const badge = document.createElement("span");
   badge.className = "service-badge";
   badge.textContent = item.status === "online" ? "Online" : item.status === "warning" ? "Warnung" : "Offline";
-  head.append(title, badge);
+  const actions = document.createElement("div");
+  actions.className = "service-actions";
+  actions.append(badge);
+  const editableTarget = canEdit() ? state.statusTargets.find((target) => target.id === item.id) : null;
+  if (editableTarget) {
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "subtle-button";
+    edit.textContent = "Bearbeiten";
+    edit.addEventListener("click", () => openStatusWidgetDialog(editableTarget));
+    actions.append(edit);
+  }
+  head.append(title, actions);
 
   const message = document.createElement("p");
   message.className = "service-message";
@@ -972,15 +996,25 @@ function openLinkDialog(link = null) {
   renderNewLinkCategory();
   elements.linkCategory.dataset.autoCategory = link ? "false" : "true";
   elements.linkNote.value = link?.note || "";
-  setLinkStatusWidgetForm(link?.statusWidget);
   setLinkStatus("idle", "Nicht getestet");
   elements.deleteButton.hidden = !link;
   elements.editorDialog.showModal();
   elements.linkUrl.focus();
 }
 
-function setLinkStatusWidgetForm(widget = {}) {
-  elements.linkStatusEnabled.checked = widget?.enabled === true;
+function openStatusWidgetDialog(target = null) {
+  if (!canEdit()) return openAdminDialog();
+  elements.statusWidgetDialogTitle.textContent = target ? "Widget bearbeiten" : "Widget hinzufügen";
+  elements.statusTargetId.value = target?.id || "";
+  elements.statusTargetName.value = target?.name || "";
+  setStatusWidgetForm(target || { enabled: true });
+  elements.deleteStatusTargetButton.hidden = !target;
+  elements.statusWidgetDialog.showModal();
+  elements.statusTargetName.focus();
+}
+
+function setStatusWidgetForm(widget = {}) {
+  elements.linkStatusEnabled.checked = widget?.enabled !== false;
   elements.linkStatusType.value = widget?.type || "basic";
   elements.linkStatusUrl.value = widget?.url || "";
   elements.linkStatusTokenId.value = widget?.tokenId || "";
@@ -1002,6 +1036,7 @@ function renderLinkStatusFields() {
   const enabled = elements.linkStatusEnabled.checked;
   const type = elements.linkStatusType.value || "basic";
   elements.linkStatusFields.hidden = !enabled;
+  elements.linkStatusUrl.required = enabled;
   elements.linkStatusFields.querySelectorAll("[data-status-field]").forEach((field) => {
     field.hidden = !field.dataset.statusField.split(/\s+/).includes(type);
   });
@@ -1014,6 +1049,50 @@ function toggleSecretFields() {
     input.type = reveal ? "text" : "password";
   });
   elements.toggleSecretFieldsButton.textContent = reveal ? "Zugangsdaten verbergen" : "Zugangsdaten anzeigen";
+}
+
+function collectStatusWidgetForm() {
+  return {
+    enabled: elements.linkStatusEnabled.checked,
+    type: elements.linkStatusType.value,
+    url: normalizeUrl(elements.linkStatusUrl.value),
+    tokenId: elements.linkStatusTokenId.value.trim(),
+    tokenSecret: elements.linkStatusTokenSecret.value.trim(),
+    apiKey: elements.linkStatusApiKey.value.trim(),
+    entities: elements.linkStatusEntities.value.trim(),
+    username: elements.linkStatusUsername.value.trim(),
+    password: elements.linkStatusPassword.value,
+    statusPath: elements.linkStatusPath.value.trim(),
+    debug: elements.linkStatusDebug.checked
+  };
+}
+
+async function saveStatusTarget() {
+  if (!elements.statusWidgetForm.reportValidity()) return;
+  const target = {
+    ...collectStatusWidgetForm(),
+    id: elements.statusTargetId.value || createId(),
+    name: elements.statusTargetName.value.trim() || "Status"
+  };
+  if (target.enabled && !target.url) throw new Error("Status-URL fehlt");
+  const existingIndex = state.statusTargets.findIndex((candidate) => candidate.id === target.id);
+  if (existingIndex >= 0) state.statusTargets.splice(existingIndex, 1, target);
+  else state.statusTargets.push(target);
+  state.widgets = {
+    ...(state.widgets || {}),
+    statusOverview: true
+  };
+  await saveData("Widget gespeichert");
+  elements.statusWidgetDialog.close();
+  loadStatus().catch(() => {});
+}
+
+async function deleteStatusTarget() {
+  const id = elements.statusTargetId.value;
+  state.statusTargets = state.statusTargets.filter((target) => target.id !== id);
+  await saveData("Widget gelöscht");
+  elements.statusWidgetDialog.close();
+  loadStatus().catch(() => {});
 }
 
 function openSettingsDialog() {
@@ -1223,20 +1302,7 @@ async function saveLink() {
     title: elements.linkTitle.value.trim() || titleFromUrl(url),
     url,
     category: selectedLinkCategory(),
-    note: elements.linkNote.value.trim(),
-    statusWidget: {
-      enabled: elements.linkStatusEnabled.checked,
-      type: elements.linkStatusType.value,
-      url: normalizeUrl(elements.linkStatusUrl.value || elements.linkUrl.value),
-      tokenId: elements.linkStatusTokenId.value.trim(),
-      tokenSecret: elements.linkStatusTokenSecret.value.trim(),
-      apiKey: elements.linkStatusApiKey.value.trim(),
-      entities: elements.linkStatusEntities.value.trim(),
-      username: elements.linkStatusUsername.value.trim(),
-      password: elements.linkStatusPassword.value,
-      statusPath: elements.linkStatusPath.value.trim(),
-      debug: elements.linkStatusDebug.checked
-    }
+    note: elements.linkNote.value.trim()
   };
   const existingIndex = state.links.findIndex((candidate) => candidate.id === link.id);
   if (existingIndex >= 0) state.links.splice(existingIndex, 1, link);
@@ -1356,7 +1422,7 @@ async function saveProfile() {
   const name = elements.profileName.value.trim();
   if (!name) return;
   const id = createId();
-  state.profiles.push({ id, name, categories: [{ id: createId(), name: "Links", icon: "link", color: "#35f0ff", visible: true }], links: [] });
+  state.profiles.push({ id, name, categories: [{ id: createId(), name: "Links", icon: "link", color: "#35f0ff", visible: true }], links: [], statusTargets: [] });
   state.activeProfileId = id;
   syncActiveProfileAliases();
   await saveData("Profil erstellt");
@@ -1386,6 +1452,9 @@ async function createDemoProfile() {
       { id: createId(), name: "Netzwerk", icon: "network", color: "#35f0ff", visible: true },
       { id: createId(), name: "Medien", icon: "media", color: "#4aa8ff", visible: true }
     ],
+    statusTargets: [
+      { id: createId(), name: "AMP Panel", enabled: true, type: "basic", url: "https://example.com/amp", statusPath: "" }
+    ],
     links: [
       createDemoLink("Rechnungstool", "https://example.com/business", "Business", "Demo-Link ohne private Daten"),
       createDemoLink("AMP Panel", "https://example.com/amp", "Gameserver", "Status-Widget kann hier gepflegt werden"),
@@ -1407,8 +1476,7 @@ function createDemoLink(title, url, category, note) {
     title,
     url,
     category,
-    note,
-    statusWidget: { enabled: false, type: "basic", url: "", statusPath: "" }
+    note
   };
 }
 
@@ -1499,8 +1567,7 @@ async function importBookmarks(html) {
       title,
       url,
       category,
-      note: "",
-      statusWidget: { enabled: false, type: "basic", url: "", statusPath: "" }
+      note: ""
     });
   }
   if (!nextLinks.length) throw new Error("Keine neuen Bookmarks gefunden");
@@ -1721,6 +1788,7 @@ elements.searchToggleButton.addEventListener("click", () => {
   if (state.searchOpen) elements.search.focus();
 });
 elements.addButton.addEventListener("click", () => openLinkDialog());
+elements.addWidgetButton.addEventListener("click", () => openStatusWidgetDialog());
 elements.settingsButton.addEventListener("click", openSettingsDialog);
 elements.newNoteButton.addEventListener("click", openNoteComposer);
 elements.settingsCategoriesButton.addEventListener("click", () => {
@@ -1768,6 +1836,13 @@ elements.linkCategory.addEventListener("change", () => {
 elements.linkStatusEnabled.addEventListener("change", renderLinkStatusFields);
 elements.linkStatusType.addEventListener("change", renderLinkStatusFields);
 elements.toggleSecretFieldsButton.addEventListener("click", toggleSecretFields);
+elements.saveStatusTargetButton.addEventListener("click", () => saveStatusTarget().catch((error) => showToast(error.message)));
+elements.statusWidgetForm.addEventListener("submit", (event) => {
+  if (event.submitter?.value === "cancel") return;
+  event.preventDefault();
+  saveStatusTarget().catch((error) => showToast(error.message));
+});
+elements.deleteStatusTargetButton.addEventListener("click", () => deleteStatusTarget().catch((error) => showToast(error.message)));
 elements.saveSettingsButton.addEventListener("click", () => saveSettings().catch((error) => showToast(error.message)));
 elements.addCategoryButton.addEventListener("click", addCategory);
 elements.saveCategoriesButton.addEventListener("click", () => saveCategories().catch((error) => showToast(error.message)));

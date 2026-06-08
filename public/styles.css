@@ -770,6 +770,18 @@ textarea:focus {
   gap: 3px;
 }
 
+.service-actions {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+}
+
+.service-actions .subtle-button {
+  min-height: 28px;
+  padding: 5px 8px;
+  font-size: 0.74rem;
+}
+
 .service-head strong {
   font-weight: 700;
 }

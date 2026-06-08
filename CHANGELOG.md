@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.4.0 - 2026-06-08
+
+- Links und Status-Widgets im Datenmodell und in der UI getrennt.
+- Eigenen `+ Widget` Dialog fuer Service-, Proxmox-, Proxmox Backup Server-, Unraid-, AMP- und Home-Assistant-Widgets ergaenzt.
+- Bestehende alte Link-Widgets werden automatisch in separate Status-Targets migriert.
+- Widget-Secrets werden auch im neuen `statusTargets` Modell beim Speichern erhalten.
+- Standard-Image-Tag auf `v1.4.0` angehoben.
+
 ## v1.3.1 - 2026-06-06
 
 - Ausgeblendete Kategorien werden nicht mehr als leere Kategorien auf der Startseite angezeigt.

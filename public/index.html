@@ -38,6 +38,7 @@
           <input id="searchInput" type="search" placeholder="Link, Kategorie oder Google-Suche" autocomplete="off" />
         </label>
         <button class="primary admin-only" id="addButton" type="button">+ Link</button>
+        <button class="admin-only" id="addWidgetButton" type="button">+ Widget</button>
         <button class="admin-only" id="newNoteButton" type="button">+ Notiz</button>
         <button id="adminButton" type="button" aria-pressed="false">Admin gesperrt</button>
         <label class="compact-field command-profile">
@@ -142,12 +143,32 @@
           Notiz
           <input id="linkNote" maxlength="120" />
         </label>
+        <footer>
+          <button id="deleteButton" class="danger" type="button">Löschen</button>
+          <span></span>
+          <button value="cancel" formnovalidate type="submit">Abbrechen</button>
+          <button class="primary" id="saveLinkButton" value="default" type="button">Speichern</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog id="statusWidgetDialog">
+      <form method="dialog" class="dialog-card" id="statusWidgetForm">
+        <header>
+          <h2 id="statusWidgetDialogTitle">Widget bearbeiten</h2>
+          <button class="icon-button" value="cancel" aria-label="Schließen" formnovalidate type="submit">x</button>
+        </header>
+        <input type="hidden" id="statusTargetId" />
+        <label>
+          Name
+          <input id="statusTargetName" required maxlength="80" placeholder="Proxmox, PBS, Home Assistant..." />
+        </label>
         <div class="link-widget-config">
           <label class="toggle-row">
             <input id="linkStatusEnabled" type="checkbox" />
-            <span>Status-Widget an diesem Link</span>
+            <span>Widget aktiv</span>
           </label>
-          <div id="linkStatusFields" class="status-config-fields" hidden>
+          <div id="linkStatusFields" class="status-config-fields">
             <label>
               Widget
               <select id="linkStatusType">
@@ -161,7 +182,7 @@
             </label>
             <label>
               Status-URL
-              <input id="linkStatusUrl" placeholder="leer = Link-URL" />
+              <input id="linkStatusUrl" required inputmode="url" placeholder="https://..." />
             </label>
             <label data-status-field="proxmox proxmoxbackup">
               Proxmox/PBS Token-ID
@@ -199,10 +220,10 @@
           </div>
         </div>
         <footer>
-          <button id="deleteButton" class="danger" type="button">Löschen</button>
+          <button id="deleteStatusTargetButton" class="danger" type="button">Löschen</button>
           <span></span>
           <button value="cancel" formnovalidate type="submit">Abbrechen</button>
-          <button class="primary" id="saveLinkButton" value="default" type="button">Speichern</button>
+          <button class="primary" id="saveStatusTargetButton" value="default" type="button">Speichern</button>
         </footer>
       </form>
     </dialog>

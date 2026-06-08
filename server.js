@@ -26,7 +26,7 @@ const defaultCategories = [
 ].map(([name, icon, color]) => ({ id: crypto.randomUUID(), name, icon, color }));
 
 const defaultData = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   setupComplete: false,
   title: "Homedash",
   subtitle: "Deine Startseite fuer Links, Profile und kleine Widgets",
@@ -61,7 +61,8 @@ const defaultData = {
       id: "default",
       name: "Privat",
       categories: [{ id: crypto.randomUUID(), name: "Links", icon: "star", color: "#35f0ff", visible: true }],
-      links: []
+      links: [],
+      statusTargets: []
     }
   ]
 };
@@ -103,7 +104,7 @@ function writeData(data) {
       ...existing.admin,
       ...mergedData.admin
     },
-    schemaVersion: mergedData.schemaVersion || 5
+    schemaVersion: mergedData.schemaVersion || 6
   });
   fs.writeFileSync(DATA_FILE, `${JSON.stringify(safeData, null, 2)}\n`);
   return safeData;
@@ -112,6 +113,9 @@ function writeData(data) {
 function preserveExistingStatusSecrets(incoming, existing) {
   const existingWidgets = new Map();
   for (const profile of Array.isArray(existing.profiles) ? existing.profiles : []) {
+    for (const target of Array.isArray(profile.statusTargets) ? profile.statusTargets : []) {
+      if (target.id) existingWidgets.set(String(target.id), target);
+    }
     for (const link of Array.isArray(profile.links) ? profile.links : []) {
       if (link.id && link.statusWidget) existingWidgets.set(String(link.id), link.statusWidget);
     }
@@ -122,16 +126,13 @@ function preserveExistingStatusSecrets(incoming, existing) {
     }
   }
 
-  const mergeLink = (link) => {
-    if (!link?.id || !link.statusWidget) return link;
-    const existingWidget = existingWidgets.get(String(link.id));
-    if (!existingWidget || String(existingWidget.type || "basic").toLowerCase() !== String(link.statusWidget.type || "basic").toLowerCase()) {
-      return link;
+  const mergeTarget = (target) => {
+    if (!target?.id) return target;
+    const existingWidget = existingWidgets.get(String(target.id));
+    if (!existingWidget || String(existingWidget.type || "basic").toLowerCase() !== String(target.type || "basic").toLowerCase()) {
+      return target;
     }
-    return {
-      ...link,
-      statusWidget: preserveStatusWidgetSecrets(link.statusWidget, existingWidget)
-    };
+    return preserveStatusWidgetSecrets(target, existingWidget);
   };
 
   return {
@@ -139,10 +140,13 @@ function preserveExistingStatusSecrets(incoming, existing) {
     profiles: Array.isArray(incoming.profiles)
       ? incoming.profiles.map((profile) => ({
           ...profile,
-          links: Array.isArray(profile.links) ? profile.links.map(mergeLink) : profile.links
+          statusTargets: Array.isArray(profile.statusTargets) ? profile.statusTargets.map(mergeTarget) : profile.statusTargets,
+          links: Array.isArray(profile.links)
+            ? profile.links.map((link) => link?.statusWidget ? { ...link, statusWidget: mergeTarget({ id: link.id, ...link.statusWidget }) } : link)
+            : profile.links
         }))
       : incoming.profiles,
-    links: Array.isArray(incoming.links) ? incoming.links.map(mergeLink) : incoming.links
+    links: incoming.links
   };
 }
 
@@ -167,10 +171,11 @@ function normalizeData(data) {
           id: data.activeProfileId || "default",
           name: "Start",
           categories: data.categories,
-          links: data.links
+          links: data.links,
+          statusTargets: data.statusTargets
         }
       ];
-  const profiles = rawProfiles.map(normalizeProfile).filter((profile) => profile.links.length || profile.categories.length);
+  const profiles = rawProfiles.map(normalizeProfile).filter((profile) => profile.links.length || profile.categories.length || profile.statusTargets.length);
   if (!profiles.length) profiles.push(normalizeProfile(defaultData.profiles[0]));
   const activeProfileId = profiles.some((profile) => profile.id === data.activeProfileId)
     ? String(data.activeProfileId)
@@ -192,28 +197,38 @@ function normalizeData(data) {
     },
     profiles,
     categories: activeProfile.categories,
-    links: activeProfile.links
+    links: activeProfile.links,
+    statusTargets: activeProfile.statusTargets
   };
 }
 
 function normalizeProfile(profile) {
   const links = Array.isArray(profile.links) ? profile.links : [];
+  const migratedTargets = links
+    .filter((link) => link?.statusWidget?.enabled)
+    .map((link) => ({
+      ...link.statusWidget,
+      id: String(link.statusWidget.id || link.id || crypto.randomUUID()),
+      name: String(link.statusWidget.name || link.title || "Status"),
+      url: link.statusWidget.url || link.url
+    }));
   const normalizedLinks = links
     .map((link) => ({
       id: String(link.id || crypto.randomUUID()),
       title: String(link.title || "Ohne Titel").slice(0, 80),
       url: normalizeUrl(String(link.url || "")),
       category: String(link.category || "Links").slice(0, 40),
-      note: String(link.note || "").slice(0, 120),
-      statusWidget: normalizeStatusWidget(link.statusWidget, link.url)
+      note: String(link.note || "").slice(0, 120)
     }))
     .filter((link) => link.url);
+  const normalizedTargets = normalizeStatusTargets([...(Array.isArray(profile.statusTargets) ? profile.statusTargets : []), ...migratedTargets]);
 
   return {
     id: String(profile.id || crypto.randomUUID()),
     name: String(profile.name || "Start").slice(0, 50),
     categories: normalizeCategories(profile.categories, normalizedLinks),
-    links: normalizedLinks
+    links: normalizedLinks,
+    statusTargets: normalizedTargets
   };
 }
 
@@ -289,6 +304,24 @@ function normalizeStatusWidget(widget, fallbackUrl = "") {
   };
 }
 
+function normalizeStatusTargets(targets) {
+  const seen = new Set();
+  return (Array.isArray(targets) ? targets : [])
+    .map((target) => {
+      const normalized = normalizeStatusWidget({ ...target, enabled: target?.enabled !== false }, target?.url);
+      return {
+        ...normalized,
+        id: String(target?.id || crypto.randomUUID()).slice(0, 80),
+        name: String(target?.name || target?.title || target?.type || "Status").trim().slice(0, 80) || "Status"
+      };
+    })
+    .filter((target) => {
+      if (!target.url || !parseHttpUrl(target.url) || seen.has(target.id)) return false;
+      seen.add(target.id);
+      return true;
+    });
+}
+
 function normalizeHomeAssistantEntities(value) {
   const raw = Array.isArray(value) ? value.join(",") : String(value || "");
   return raw
@@ -348,12 +381,13 @@ function migrateData(data) {
     }));
   }
 
-  normalized.schemaVersion = 5;
+  normalized.schemaVersion = 6;
   normalized.subtitle = normalized.subtitle || defaultData.subtitle;
   const activeProfile = normalized.profiles.find((profile) => profile.id === normalized.activeProfileId) || normalized.profiles[0];
   activeProfile.categories = normalizeCategories(originalVersion < 2 ? [] : activeProfile.categories, activeProfile.links);
   normalized.categories = activeProfile.categories;
   normalized.links = activeProfile.links;
+  normalized.statusTargets = activeProfile.statusTargets;
 
   return normalized;
 }
@@ -461,26 +495,23 @@ function readAppVersion() {
 }
 
 function redactStatusSecrets(data) {
-  const redactLink = (link) => link.statusWidget ? {
-    ...link,
-    statusWidget: {
-      ...link.statusWidget,
+  const redactTarget = (target) => target ? {
+    ...target,
       tokenId: "",
       tokenSecret: "",
       apiKey: "",
       username: "",
       password: "",
       headerValue: ""
-    }
-  } : link;
+  } : target;
   const profiles = (data.profiles || []).map((profile) => ({
     ...profile,
-    links: (profile.links || []).map(redactLink)
+    statusTargets: (profile.statusTargets || []).map(redactTarget)
   }));
   return {
     ...data,
     profiles,
-    links: (data.links || []).map(redactLink)
+    statusTargets: (data.statusTargets || []).map(redactTarget)
   };
 }
 
@@ -726,13 +757,17 @@ function publicStatusTarget(target) {
     id: target.id,
     name: target.name,
     type: target.type,
-    url: target.url
+    url: target.url,
+    enabled: target.enabled !== false
   };
 }
 
 function getConfiguredStatusTargets(data) {
   const linkTargets = [];
   for (const profile of data.profiles || []) {
+    for (const target of profile.statusTargets || []) {
+      linkTargets.push(target);
+    }
     for (const link of profile.links || []) {
       if (!link.statusWidget?.enabled) continue;
       linkTargets.push({
@@ -766,6 +801,9 @@ async function readStatusTarget(target) {
   };
 
   try {
+    if (target.enabled === false) {
+      return { ...base, message: "Deaktiviert", metrics: [{ label: "Status", value: "Aus" }] };
+    }
     if (target.type === "proxmox") return await readProxmoxStatus(target, base);
     if (target.type === "proxmoxbackup") return await readProxmoxBackupStatus(target, base);
     if (target.type === "unraid" && target.apiKey) return await readUnraidStatus(target, base);
@@ -828,6 +866,10 @@ function buildHomeAssistantControls(target, states) {
 
 function findHomeAssistantTarget(data, linkId) {
   for (const profile of data.profiles || []) {
+    for (const target of profile.statusTargets || []) {
+      if (target.id !== linkId || target.type !== "homeassistant" || target.enabled === false) continue;
+      return target;
+    }
     for (const link of profile.links || []) {
       if (link.id !== linkId || link.statusWidget?.type !== "homeassistant" || !link.statusWidget?.enabled) continue;
       return {
