@@ -2,6 +2,11 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.4.1 - 2026-06-08
+
+- CPU-Auslastung im Proxmox-VE-Widget ergaenzt.
+- Standard-Image-Tag auf `v1.4.1` angehoben.
+
 ## v1.4.0 - 2026-06-08
 
 - Links und Status-Widgets im Datenmodell und in der UI getrennt.

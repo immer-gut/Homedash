@@ -1536,12 +1536,19 @@ async function readProxmoxStatus(target, base) {
   const runningGuests = guests.filter((item) => item.status === "running").length;
   const totalMemory = nodes.reduce((sum, item) => sum + Number(item.maxmem || 0), 0);
   const usedMemory = nodes.reduce((sum, item) => sum + Number(item.mem || 0), 0);
+  const cpuValues = nodes
+    .map((item) => toFiniteNumber(item.cpu))
+    .filter((value) => value !== undefined);
+  const averageCpu = cpuValues.length
+    ? cpuValues.reduce((sum, value) => sum + value, 0) / cpuValues.length
+    : undefined;
   const updates = await readProxmoxUpdates(target, headers, nodes);
   const updateValue = formatProxmoxUpdateValue(updates);
 
   metrics.push({ label: "Nodes", value: `${onlineNodes}/${nodes.length || 0}` });
   metrics.push({ label: "VM/CT", value: `${runningGuests}/${guests.length || 0}` });
   if (updates.checked) metrics.push({ label: "Updates", value: updateValue });
+  if (averageCpu !== undefined) metrics.push({ label: "CPU", value: `${Math.round(averageCpu * 100)}%` });
   if (totalMemory > 0) metrics.push({ label: "RAM", value: `${Math.round((usedMemory / totalMemory) * 100)}%` });
 
   return {
