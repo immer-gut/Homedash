@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.6.0 - 2026-06-09
+
+- Anzeigenamen fuer Home-Assistant-Sensoren ergaenzt.
+- HA-Sensoren koennen als `entity_id=Name` oder `entity_id|Name` gepflegt werden.
+- Standard-Image-Tag auf `v1.6.0` angehoben.
+
 ## v1.5.0 - 2026-06-09
 
 - Home-Assistant-Widget von Schalter-Buttons auf Sensorwert-Anzeige umgestellt.

@@ -987,7 +987,9 @@ function setStatusWidgetForm(widget = {}) {
   elements.linkStatusTokenId.value = widget?.tokenId || "";
   elements.linkStatusTokenSecret.value = widget?.tokenSecret || "";
   elements.linkStatusApiKey.value = widget?.apiKey || "";
-  elements.linkStatusEntities.value = Array.isArray(widget?.entities) ? widget.entities.join(", ") : widget?.entities || "";
+  elements.linkStatusEntities.value = Array.isArray(widget?.entities)
+    ? widget.entities.map(formatHomeAssistantEntitySpec).join(", ")
+    : widget?.entities || "";
   elements.linkStatusUsername.value = widget?.username || "";
   elements.linkStatusPassword.value = widget?.password || "";
   elements.linkStatusTokenSecret.type = "password";
@@ -1007,6 +1009,13 @@ function renderLinkStatusFields() {
   elements.linkStatusFields.querySelectorAll("[data-status-field]").forEach((field) => {
     field.hidden = !field.dataset.statusField.split(/\s+/).includes(type);
   });
+}
+
+function formatHomeAssistantEntitySpec(entity) {
+  if (typeof entity === "string") return entity;
+  const entityId = entity?.entityId || entity?.id || "";
+  const label = entity?.label || entity?.name || "";
+  return label ? `${entityId}=${label}` : entityId;
 }
 
 function toggleSecretFields() {

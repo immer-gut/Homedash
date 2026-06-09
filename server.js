@@ -323,12 +323,24 @@ function normalizeStatusTargets(targets) {
 }
 
 function normalizeHomeAssistantEntities(value) {
-  const raw = Array.isArray(value) ? value.join(",") : String(value || "");
+  const raw = Array.isArray(value)
+    ? value.map((entry) => typeof entry === "object" ? `${entry.entityId || entry.id || ""}=${entry.label || entry.name || ""}` : String(entry)).join(",")
+    : String(value || "");
   return raw
     .split(/[\n,]+/)
-    .map((entity) => entity.trim())
-    .filter((entity) => /^[a-z_]+\.[\w-]+$/i.test(entity))
+    .map(normalizeHomeAssistantEntitySpec)
+    .filter(Boolean)
     .slice(0, 12);
+}
+
+function normalizeHomeAssistantEntitySpec(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+  const separatorIndex = ["=", "|"].map((separator) => raw.indexOf(separator)).filter((index) => index > 0).sort((a, b) => a - b)[0];
+  const entityId = (separatorIndex ? raw.slice(0, separatorIndex) : raw).trim();
+  const label = separatorIndex ? raw.slice(separatorIndex + 1).trim().slice(0, 60) : "";
+  if (!/^[a-z_]+\.[\w-]+$/i.test(entityId)) return null;
+  return { entityId, label };
 }
 
 function normalizeCategories(categories, links) {
@@ -853,13 +865,13 @@ async function readHomeAssistantStatus(target, base) {
 
 function buildHomeAssistantSensors(target, states) {
   const stateMap = new Map(states.map((entity) => [entity.entity_id, entity]));
-  return normalizeHomeAssistantEntities(target.entities).map((entityId) => {
-    const entity = stateMap.get(entityId) || {};
+  return normalizeHomeAssistantEntities(target.entities).map((sensorSpec) => {
+    const entity = stateMap.get(sensorSpec.entityId) || {};
     const state = String(entity.state || "unknown");
     const unit = String(entity.attributes?.unit_of_measurement || "").trim();
     return {
-      entityId,
-      label: entity.attributes?.friendly_name || entityId.replace(/^[^.]+\./, "").replace(/_/g, " "),
+      entityId: sensorSpec.entityId,
+      label: sensorSpec.label || entity.attributes?.friendly_name || sensorSpec.entityId.replace(/^[^.]+\./, "").replace(/_/g, " "),
       state,
       unit,
       value: unit ? `${state} ${unit}` : state,
