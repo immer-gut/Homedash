@@ -1619,6 +1619,18 @@ async function toggleAdmin() {
   openAdminDialog();
 }
 
+async function toggleAdminShortcut() {
+  if (state.auth?.enabled && state.auth?.authenticated) {
+    await toggleAdmin();
+    return;
+  }
+  const response = await fetch("/api/auth/shortcut", { method: "POST" });
+  if (!response.ok) throw new Error("Admin-Shortcut fehlgeschlagen");
+  state.auth = await response.json();
+  await loadData();
+  showToast("Admin per Shortcut entsperrt");
+}
+
 function openAdminDialog() {
   if (!state.auth?.enabled) return;
   elements.adminPassword.value = "";
@@ -1858,6 +1870,11 @@ document.addEventListener("keydown", (event) => {
   const target = event.target;
   const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
   const openDialog = document.querySelector("dialog[open]");
+  if (event.ctrlKey && event.altKey && event.key.toLowerCase() === "l") {
+    event.preventDefault();
+    toggleAdminShortcut().catch((error) => showToast(error.message));
+    return;
+  }
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
     event.preventDefault();
     if (!openDialog || openDialog === elements.commandDialog) openCommandPalette();

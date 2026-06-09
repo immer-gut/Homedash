@@ -2,6 +2,11 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.6.1 - 2026-06-09
+
+- Tastenkombination `Ctrl+Alt+L` fuer passwortloses Admin-Entsperren ergaenzt.
+- Standard-Image-Tag auf `v1.6.1` angehoben.
+
 ## v1.6.0 - 2026-06-09
 
 - Anzeigenamen fuer Home-Assistant-Sensoren ergaenzt.

