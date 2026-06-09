@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.5.0 - 2026-06-09
+
+- Home-Assistant-Widget von Schalter-Buttons auf Sensorwert-Anzeige umgestellt.
+- Konfigurierte HA-Entities zeigen jetzt aktuellen State inklusive Einheit, zum Beispiel Temperatur- oder Feuchtigkeitssensoren.
+- Alte Home-Assistant-Toggle-API entfernt.
+- Standard-Image-Tag auf `v1.5.0` angehoben.
+
 ## v1.4.1 - 2026-06-08
 
 - CPU-Auslastung im Proxmox-VE-Widget ergaenzt.

@@ -742,8 +742,10 @@ function parseStatusTargets(raw) {
         password: String(target.password || ""),
         tokenId: String(target.tokenId || ""),
         tokenSecret: String(target.tokenSecret || ""),
+        entities: normalizeHomeAssistantEntities(target.entities),
         headerName: String(target.headerName || ""),
-        headerValue: String(target.headerValue || "")
+        headerValue: String(target.headerValue || ""),
+        debug: target.debug === true
       }))
       .filter((target) => target.url && parseHttpUrl(target.url));
   } catch (error) {
@@ -828,10 +830,9 @@ async function readHomeAssistantStatus(target, base) {
   const config = await requestJson(new URL("/api/config", target.url).href, { headers }).catch(() => ({}));
   const states = await requestJson(new URL("/api/states", target.url).href, { headers }).catch(() => []);
   const entities = Array.isArray(states) ? states : [];
-  const controls = buildHomeAssistantControls(target, entities);
-  const controlsOn = controls.filter((entity) => entity.state === "on").length;
+  const sensors = buildHomeAssistantSensors(target, entities);
   const metrics = [
-    { label: "Schalter", value: `${controlsOn}/${controls.length}` }
+    { label: "Sensoren", value: String(sensors.length) }
   ];
   if (config.version) metrics.push({ label: "Version", value: String(config.version).slice(0, 24) });
 
@@ -840,66 +841,30 @@ async function readHomeAssistantStatus(target, base) {
     ok: true,
     status: "online",
     message: config.location_name || info.message || "Home Assistant erreichbar",
-    controls,
-    details: controls
-      .filter((control) => !control.online)
-      .map((control) => ({ label: control.label, value: control.state, online: false })),
+    sensors,
+    details: sensors.map((sensor) => ({
+      label: sensor.label,
+      value: sensor.value,
+      online: sensor.online
+    })),
     metrics
   };
 }
 
-function buildHomeAssistantControls(target, states) {
+function buildHomeAssistantSensors(target, states) {
   const stateMap = new Map(states.map((entity) => [entity.entity_id, entity]));
   return normalizeHomeAssistantEntities(target.entities).map((entityId) => {
     const entity = stateMap.get(entityId) || {};
-    const domain = entityId.split(".")[0];
+    const state = String(entity.state || "unknown");
+    const unit = String(entity.attributes?.unit_of_measurement || "").trim();
     return {
       entityId,
-      domain,
       label: entity.attributes?.friendly_name || entityId.replace(/^[^.]+\./, "").replace(/_/g, " "),
-      state: String(entity.state || "unknown"),
-      online: !["unavailable", "unknown"].includes(String(entity.state || "unknown")),
-      toggleable: ["switch", "light", "input_boolean", "fan", "cover", "script", "scene", "automation"].includes(domain)
+      state,
+      unit,
+      value: unit ? `${state} ${unit}` : state,
+      online: !["unavailable", "unknown"].includes(state)
     };
-  });
-}
-
-function findHomeAssistantTarget(data, linkId) {
-  for (const profile of data.profiles || []) {
-    for (const target of profile.statusTargets || []) {
-      if (target.id !== linkId || target.type !== "homeassistant" || target.enabled === false) continue;
-      return target;
-    }
-    for (const link of profile.links || []) {
-      if (link.id !== linkId || link.statusWidget?.type !== "homeassistant" || !link.statusWidget?.enabled) continue;
-      return {
-        ...link.statusWidget,
-        id: link.id,
-        name: link.title,
-        url: link.statusWidget.url || link.url
-      };
-    }
-  }
-  return null;
-}
-
-async function toggleHomeAssistantEntity(linkId, entityId) {
-  const data = readData();
-  const target = findHomeAssistantTarget(data, linkId);
-  if (!target) throw new Error("Home Assistant Widget nicht gefunden");
-  if (!target.apiKey) throw new Error("Home Assistant Token fehlt");
-  const controls = normalizeHomeAssistantEntities(target.entities);
-  if (!controls.includes(entityId)) throw new Error("Entity ist nicht fuer Buttons freigegeben");
-  const domain = entityId.split(".")[0];
-  const service = ["script", "scene"].includes(domain) ? "turn_on" : "toggle";
-  await requestJsonPost(new URL(`/api/services/${encodeURIComponent(domain)}/${service}`, target.url).href, {
-    headers: { Authorization: `Bearer ${target.apiKey}` },
-    body: { entity_id: entityId }
-  });
-  return readStatusTarget({
-    ...target,
-    id: linkId,
-    type: "homeassistant"
   });
 }
 
@@ -2324,13 +2289,6 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/status" && req.method === "GET") {
       sendJson(res, 200, await readStatusTargets());
-      return;
-    }
-
-    if (url.pathname === "/api/homeassistant/toggle" && req.method === "POST") {
-      if (!requireAuth(req, res)) return;
-      const body = JSON.parse(await readRequestBody(req));
-      sendJson(res, 200, await toggleHomeAssistantEntity(String(body.linkId || ""), String(body.entityId || "")));
       return;
     }
 

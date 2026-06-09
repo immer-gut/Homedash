@@ -1307,31 +1307,42 @@ body[data-theme="time-circuit"] .link-title {
   align-items: center;
 }
 
-.ha-controls {
-  display: flex;
-  flex-wrap: wrap;
+.ha-sensors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 6px;
 }
 
-.ha-control {
-  min-height: 28px;
-  border-color: color-mix(in srgb, var(--service-glow, var(--accent)), transparent 58%);
-  border-radius: 999px;
-  padding: 4px 10px;
-  color: var(--muted);
+.ha-sensor {
+  display: grid;
+  gap: 2px;
+  border: 1px solid color-mix(in srgb, var(--service-glow, var(--accent)), transparent 58%);
+  border-radius: 8px;
+  padding: 6px 8px;
   background: rgba(0, 0, 0, 0.16);
-  font-size: 0.74rem;
+  min-width: 0;
+}
+
+.ha-sensor small {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
   font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.ha-control.is-on {
+.ha-sensor strong {
+  overflow: hidden;
   color: var(--good);
-  background: color-mix(in srgb, var(--good), transparent 86%);
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.ha-control:disabled {
-  cursor: not-allowed;
-  opacity: 0.52;
+.ha-sensor.is-offline strong {
+  color: var(--muted);
 }
 
 .metric-icon {

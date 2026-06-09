@@ -850,8 +850,8 @@ function createLinkStatus(status) {
 
   panel.append(line);
   if (metricItems.length && !isHomeAssistant) panel.append(metrics);
-  const controls = createHomeAssistantControls(status);
-  if (controls) panel.append(controls);
+  const sensors = createHomeAssistantSensors(status);
+  if (sensors) panel.append(sensors);
   const details = createStatusDetails(status.details);
   if (details) panel.append(details);
   if (Array.isArray(status.debug) && status.debug.length) {
@@ -869,56 +869,23 @@ function getStatusMetric(status, label) {
   return metric?.value ? String(metric.value) : "";
 }
 
-function createHomeAssistantControls(status) {
-  const controls = Array.isArray(status.controls) ? status.controls : [];
-  if (!controls.length) return null;
+function createHomeAssistantSensors(status) {
+  const sensors = Array.isArray(status.sensors) ? status.sensors : [];
+  if (!sensors.length) return null;
   const list = document.createElement("div");
-  list.className = "ha-controls";
-  list.replaceChildren(...controls.map((control) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `ha-control is-${control.state === "on" ? "on" : "off"}`;
-    button.textContent = control.label;
-    button.title = `${control.entityId}: ${control.state}`;
-    button.disabled = !control.toggleable || !control.online;
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      toggleHomeAssistantControl(status, control, button).catch((error) => showToast(error.message));
-    });
-    return button;
+  list.className = "ha-sensors";
+  list.replaceChildren(...sensors.map((sensor) => {
+    const item = document.createElement("span");
+    item.className = `ha-sensor${sensor.online === false ? " is-offline" : ""}`;
+    item.title = sensor.entityId || sensor.label;
+    const label = document.createElement("small");
+    label.textContent = sensor.label || sensor.entityId || "Sensor";
+    const value = document.createElement("strong");
+    value.textContent = sensor.value || sensor.state || "-";
+    item.append(label, value);
+    return item;
   }));
   return list;
-}
-
-async function toggleHomeAssistantControl(status, control, button) {
-  button.disabled = true;
-  const nextState = control.state === "on" ? "off" : "on";
-  updateHomeAssistantControlState(status.id, control.entityId, nextState);
-  const response = await fetch("/api/homeassistant/toggle", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ linkId: status.id, entityId: control.entityId })
-  });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    updateHomeAssistantControlState(status.id, control.entityId, control.state);
-    throw new Error(result.error || "Schalten fehlgeschlagen");
-  }
-  if (result.id) updateStatusItem(result);
-  showToast(`${control.label} geschaltet`);
-  window.setTimeout(() => loadStatus().catch(() => {}), 1200);
-}
-
-function updateHomeAssistantControlState(statusId, entityId, nextState) {
-  const item = (state.status.items || []).find((candidate) => candidate.id === statusId);
-  if (!item || !Array.isArray(item.controls)) return;
-  item.controls = item.controls.map((control) => control.entityId === entityId
-    ? { ...control, state: nextState, online: true }
-    : control);
-  renderStatus();
-  renderStatsWidget();
-  renderGroups();
 }
 
 function updateStatusItem(item) {
