@@ -131,6 +131,47 @@ body[data-theme="terminal"] {
   --accent-ink: #04100c;
 }
 
+body[data-theme="fallout"] {
+  --bg: #090e08;
+  --bg-soft: #16200f;
+  --panel: rgba(12, 26, 12, 0.84);
+  --panel-strong: rgba(20, 42, 18, 0.96);
+  --text: #d6ffd1;
+  --muted: #8fb58a;
+  --line: rgba(99, 255, 98, 0.2);
+  --accent: #63ff62;
+  --accent-2: #e5d06d;
+  --accent-3: #ff9f43;
+  --accent-ink: #061006;
+  --danger: #ff6a4a;
+  --good: #63ff62;
+  --warn: #e5d06d;
+  --shadow: 0 22px 74px rgba(0, 0, 0, 0.52);
+}
+
+body[data-theme="fallout"] {
+  font-family: "Trebuchet MS", Inter, ui-sans-serif, system-ui, sans-serif;
+  background:
+    linear-gradient(180deg, rgba(229, 208, 109, 0.075), transparent 28rem),
+    linear-gradient(90deg, rgba(99, 255, 98, 0.08), transparent 44%),
+    linear-gradient(150deg, var(--bg) 0%, var(--bg-soft) 58%, #070907 100%);
+}
+
+body[data-theme="fallout"]::before {
+  opacity: 0.48;
+  background:
+    repeating-linear-gradient(0deg, rgba(99, 255, 98, 0.055) 0 1px, transparent 1px 5px),
+    linear-gradient(90deg, transparent, rgba(229, 208, 109, 0.12), transparent);
+}
+
+body[data-theme="fallout"]::after {
+  opacity: 0.15;
+  background-image:
+    linear-gradient(rgba(99, 255, 98, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(229, 208, 109, 0.13) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
 body[data-theme="time-circuit"] {
   --bg: #090b0c;
   --bg-soft: #121516;
