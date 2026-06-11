@@ -434,7 +434,7 @@ function renderStatsWidget() {
 
 function createStatusCard(item) {
   const card = document.createElement("article");
-  card.className = `service-card is-${item.status || "offline"}`;
+  card.className = `service-card status-overview-card is-${item.status || "offline"}`;
 
   const head = document.createElement("div");
   head.className = "service-head";
@@ -450,6 +450,15 @@ function createStatusCard(item) {
   const actions = document.createElement("div");
   actions.className = "service-actions";
   actions.append(badge);
+  if (item.url) {
+    const open = document.createElement("a");
+    open.className = "button subtle-button service-link";
+    open.href = item.url;
+    open.target = "_blank";
+    open.rel = "noopener noreferrer";
+    open.textContent = "Öffnen";
+    actions.append(open);
+  }
   const editableTarget = canEdit() ? state.statusTargets.find((target) => target.id === item.id) : null;
   if (editableTarget) {
     const edit = document.createElement("button");
@@ -461,20 +470,7 @@ function createStatusCard(item) {
   }
   head.append(title, actions);
 
-  const message = document.createElement("p");
-  message.className = "service-message";
-  message.textContent = item.message || (item.ok ? "Erreichbar" : "Nicht erreichbar");
-
-  const metrics = document.createElement("div");
-  metrics.className = "service-metrics";
-  const metricItems = Array.isArray(item.metrics) ? item.metrics : [];
-  metrics.replaceChildren(
-    ...(metricItems.length ? metricItems.map(createStatusMetric) : [createStatusMetric({ label: "Status", value: item.ok ? "OK" : "Fehler" })])
-  );
-
-  card.append(head, message, metrics);
-  const details = createStatusDetails(item.details);
-  if (details) card.append(details);
+  card.append(head, createLinkStatus(item, "is-widget-panel"));
   return card;
 }
 
@@ -789,10 +785,10 @@ function getStatusForLink(link) {
   });
 }
 
-function createLinkStatus(status) {
+function createLinkStatus(status, extraClass = "") {
   const panel = document.createElement("div");
   const isHomeAssistant = status.type === "homeassistant";
-  panel.className = `link-status-panel${isHomeAssistant ? " is-homeassistant" : ""}`;
+  panel.className = `link-status-panel${isHomeAssistant ? " is-homeassistant" : ""}${extraClass ? ` ${extraClass}` : ""}`;
   panel.role = "button";
   panel.tabIndex = 0;
   panel.ariaLabel = `Details zu ${status.name || "Status"} anzeigen`;
@@ -852,7 +848,7 @@ function createLinkStatus(status) {
   if (metricItems.length && !isHomeAssistant) panel.append(metrics);
   const sensors = createHomeAssistantSensors(status);
   if (sensors) panel.append(sensors);
-  const details = createStatusDetails(status.details);
+  const details = sensors ? null : createStatusDetails(status.details);
   if (details) panel.append(details);
   if (Array.isArray(status.debug) && status.debug.length) {
     const debug = document.createElement("pre");

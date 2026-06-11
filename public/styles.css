@@ -823,6 +823,15 @@ textarea:focus {
   font-size: 0.74rem;
 }
 
+.service-actions .service-link {
+  color: var(--text);
+  background: color-mix(in srgb, var(--service-glow, var(--accent)), transparent 90%);
+}
+
+.status-overview-card .link-status-panel {
+  margin: 0;
+}
+
 .service-head strong {
   font-weight: 700;
 }

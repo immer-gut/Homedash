@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.7.1 - 2026-06-11
+
+- Statusuebersicht nutzt jetzt dieselbe kompakte Panel-Darstellung wie Statusanzeigen in Linkkarten.
+- Status-Widgets enthalten einen `Oeffnen`-Link zum jeweiligen System.
+- Standard-Image-Tag auf `v1.7.1` angehoben.
+
 ## v1.7.0 - 2026-06-10
 
 - Neues Theme `Fallout 4` ergaenzt.
