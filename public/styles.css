@@ -1341,7 +1341,7 @@ body[data-theme="time-circuit"] .link-title {
   gap: 5px;
 }
 
-.link-status-metrics span {
+.link-status-metrics > span {
   border-radius: 999px;
   padding: 2px 6px;
   color: var(--muted);
@@ -1351,10 +1351,32 @@ body[data-theme="time-circuit"] .link-title {
   white-space: nowrap;
 }
 
-.link-status-metrics .link-status-metric {
+.link-status-metrics > .link-status-metric {
   display: inline-flex;
   gap: 5px;
   align-items: center;
+}
+
+.status-overview-card .link-status-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-overview-card .link-status-metrics > span {
+  display: inline-flex;
+  min-width: 96px;
+  max-width: 100%;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px 9px;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.status-overview-card .link-status-metrics > .link-status-metric {
+  justify-content: center;
 }
 
 .ha-sensors {
