@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.7.4 - 2026-06-11
+
+- Statusuebersicht groesser und lesbarer gestaltet.
+- Proxmox-/PBS-Metriken nutzen groessere Chips mit mehr Platz und besserem Umbruch.
+- Home-Assistant-Sensoren in der Statusuebersicht ebenfalls vergroessert.
+- Standard-Image-Tag auf `v1.7.4` angehoben.
+
 ## v1.7.3 - 2026-06-11
 
 - Textkontrast im Fallout-Theme deutlich erhoeht.

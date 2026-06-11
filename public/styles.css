@@ -780,8 +780,8 @@ textarea:focus {
 
 .status-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 12px;
 }
 
 .service-card {
@@ -858,7 +858,24 @@ textarea:focus {
 }
 
 .status-overview-card .link-status-panel {
+  align-content: start;
   margin: 0;
+  min-height: 164px;
+  padding: 12px 13px;
+}
+
+.status-overview-card {
+  gap: 14px;
+  min-height: 246px;
+  padding: 14px;
+}
+
+.status-overview-card .service-head strong {
+  font-size: 0.98rem;
+}
+
+.status-overview-card .service-head span {
+  font-size: 0.86rem;
 }
 
 .service-head strong {
@@ -1390,22 +1407,57 @@ body[data-theme="time-circuit"] .link-title {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .status-overview-card .link-status-metrics > span {
   display: inline-flex;
-  min-width: 96px;
+  min-width: 118px;
   max-width: 100%;
   justify-content: center;
   overflow: hidden;
-  padding: 4px 9px;
+  padding: 6px 11px;
   text-align: center;
   text-overflow: ellipsis;
+  font-size: 0.84rem;
 }
 
 .status-overview-card .link-status-metrics > .link-status-metric {
   justify-content: center;
+}
+
+.status-overview-card .link-status-line {
+  font-size: 0.9rem;
+}
+
+.status-overview-card .status-details {
+  gap: 7px;
+}
+
+.status-overview-card .status-details p {
+  padding: 8px 10px;
+  font-size: 0.84rem;
+}
+
+.status-overview-card .status-detail-value {
+  font-size: 0.86rem;
+}
+
+.status-overview-card .ha-sensors {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.status-overview-card .ha-sensor {
+  padding: 10px 11px;
+}
+
+.status-overview-card .ha-sensor small {
+  font-size: 0.74rem;
+}
+
+.status-overview-card .ha-sensor strong {
+  font-size: 1rem;
 }
 
 .ha-sensors {
