@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.7.3 - 2026-06-11
+
+- Textkontrast im Fallout-Theme deutlich erhoeht.
+- Kontrast der gedimmten Texte in Dark-, Terminal- und Time-Circuit-Theme angehoben.
+- Standard-Image-Tag auf `v1.7.3` angehoben.
+
 ## v1.7.2 - 2026-06-11
 
 - Metrik-Chips in der Statusuebersicht umbrechen jetzt sauber und zentrieren ihren Text.

@@ -23,7 +23,7 @@ body[data-theme="dark"] {
   --panel: rgba(24, 30, 39, 0.78);
   --panel-strong: rgba(34, 43, 55, 0.94);
   --text: #f7fbf6;
-  --muted: #b8c3bc;
+  --muted: #d0dad4;
   --accent: #4dd7b0;
   --accent-2: #e1c85a;
   --accent-3: #ff7d5c;
@@ -123,7 +123,7 @@ body[data-theme="terminal"] {
   --panel: rgba(8, 25, 20, 0.82);
   --panel-strong: rgba(12, 38, 31, 0.96);
   --text: #effff6;
-  --muted: #95b6a7;
+  --muted: #bce8d2;
   --line: rgba(106, 255, 178, 0.2);
   --accent: #70ffad;
   --accent-2: #e9ff8c;
@@ -136,9 +136,9 @@ body[data-theme="fallout"] {
   --bg-soft: #16200f;
   --panel: rgba(12, 26, 12, 0.84);
   --panel-strong: rgba(20, 42, 18, 0.96);
-  --text: #d6ffd1;
-  --muted: #8fb58a;
-  --line: rgba(99, 255, 98, 0.2);
+  --text: #f1ffec;
+  --muted: #c5e9bd;
+  --line: rgba(132, 255, 116, 0.34);
   --accent: #63ff62;
   --accent-2: #e5d06d;
   --accent-3: #ff9f43;
@@ -158,7 +158,7 @@ body[data-theme="fallout"] {
 }
 
 body[data-theme="fallout"]::before {
-  opacity: 0.48;
+  opacity: 0.32;
   background:
     repeating-linear-gradient(0deg, rgba(99, 255, 98, 0.055) 0 1px, transparent 1px 5px),
     linear-gradient(90deg, transparent, rgba(229, 208, 109, 0.12), transparent);
@@ -172,13 +172,42 @@ body[data-theme="fallout"]::after {
   background-size: 64px 64px;
 }
 
+body[data-theme="fallout"] .widget,
+body[data-theme="fallout"] .service-card,
+body[data-theme="fallout"] .link-card {
+  background:
+    linear-gradient(135deg, rgba(132, 255, 116, 0.08), rgba(132, 255, 116, 0.035)),
+    rgba(7, 20, 7, 0.92);
+}
+
+body[data-theme="fallout"] .link-status-panel,
+body[data-theme="fallout"] .status-details p,
+body[data-theme="fallout"] .ha-sensor {
+  background: rgba(9, 31, 9, 0.72);
+}
+
+body[data-theme="fallout"] .link-status-metrics > span {
+  color: var(--text);
+  background: rgba(3, 14, 3, 0.45);
+  font-weight: 800;
+}
+
+body[data-theme="fallout"] .service-head span,
+body[data-theme="fallout"] .service-message,
+body[data-theme="fallout"] .status-updated,
+body[data-theme="fallout"] .link-status-line,
+body[data-theme="fallout"] .status-details p,
+body[data-theme="fallout"] .ha-sensor small {
+  color: var(--muted);
+}
+
 body[data-theme="time-circuit"] {
   --bg: #090b0c;
   --bg-soft: #121516;
   --panel: rgba(12, 17, 17, 0.84);
   --panel-strong: rgba(22, 28, 27, 0.97);
   --text: #fff2d8;
-  --muted: #b9c0a9;
+  --muted: #d7dec9;
   --line: rgba(255, 134, 47, 0.24);
   --accent: #56ff8f;
   --accent-2: #ff342f;
