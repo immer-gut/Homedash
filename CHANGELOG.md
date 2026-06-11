@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.7.5 - 2026-06-11
+
+- Statusuebersicht zeigt jetzt alle Widget-Metriken an.
+- Linkkarten bleiben weiterhin auf wenige Metriken begrenzt.
+- Standard-Image-Tag auf `v1.7.5` angehoben.
+
 ## v1.7.4 - 2026-06-11
 
 - Statusuebersicht groesser und lesbarer gestaltet.

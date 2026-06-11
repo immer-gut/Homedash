@@ -788,6 +788,7 @@ function getStatusForLink(link) {
 function createLinkStatus(status, extraClass = "") {
   const panel = document.createElement("div");
   const isHomeAssistant = status.type === "homeassistant";
+  const isOverviewPanel = extraClass.split(/\s+/).includes("is-widget-panel");
   panel.className = `link-status-panel${isHomeAssistant ? " is-homeassistant" : ""}${extraClass ? ` ${extraClass}` : ""}`;
   panel.role = "button";
   panel.tabIndex = 0;
@@ -821,7 +822,7 @@ function createLinkStatus(status, extraClass = "") {
 
   const metrics = document.createElement("div");
   metrics.className = "link-status-metrics";
-  const metricLimit = status.type === "proxmoxbackup" ? 8 : 5;
+  const metricLimit = isOverviewPanel ? Number.POSITIVE_INFINITY : status.type === "proxmoxbackup" ? 8 : 5;
   const metricItems = (Array.isArray(status.metrics) ? status.metrics : [])
     .filter((metric) => String(metric.label).toLowerCase() !== "user")
     .filter((metric) => !isHomeAssistant || String(metric.label).toLowerCase() !== "version")
