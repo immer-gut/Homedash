@@ -2,6 +2,11 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.8.3 - 2026-06-25
+
+- Systemstatus-Widget wieder vollbreit dargestellt, wenn Datums-Eintraege darueber aktiv sind.
+- Standard-Image-Tag auf `v1.8.3` angehoben.
+
 ## v1.8.2 - 2026-06-25
 
 - Datums-Eintraege als vollbreite Leiste oberhalb der Systemstatus-Uebersicht platziert.

@@ -574,6 +574,7 @@ textarea:focus {
 }
 
 .status-widget {
+  grid-column: 1 / -1;
   min-height: 0;
 }
 

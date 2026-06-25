@@ -1,6 +1,6 @@
 {
   "name": "homedash-startpage",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "private": true,
   "description": "Homedash is a Docker-friendly browser-managed homepage/startpage.",
   "scripts": {
