@@ -13,6 +13,7 @@ const {
 const {
   requestHead
 } = require("./server/http");
+const { createAuthService } = require("./server/auth");
 const { createDataStore } = require("./server/data-store");
 const { createLinkMetadataService } = require("./server/link-metadata");
 const { createWeatherService } = require("./server/weather");
@@ -31,7 +32,6 @@ const PUBLIC_DIR = path.join(__dirname, "public");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const STATUS_TARGETS = parseStatusTargets(process.env.HOMEDASH_STATUS_TARGETS || "[]");
 const APP_VERSION = readAppVersion();
-const sessions = new Map();
 
 const {
   ensureDataFile,
@@ -41,6 +41,12 @@ const {
 } = createDataStore({
   dataDir: DATA_DIR,
   faviconDir: FAVICON_DIR
+});
+const auth = createAuthService({
+  adminPassword: ADMIN_PASSWORD,
+  appVersion: APP_VERSION,
+  readDataWithoutMigration,
+  sendJson
 });
 const { readLinkMetadata, serveFavicon } = createLinkMetadataService({
   faviconDir: FAVICON_DIR,
@@ -66,83 +72,6 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
-function parseCookies(req) {
-  return Object.fromEntries(
-    String(req.headers.cookie || "")
-      .split(";")
-      .map((cookie) => cookie.trim().split("="))
-      .filter(([key, value]) => key && value)
-  );
-}
-
-function isAuthed(req) {
-  const data = readDataWithoutMigration();
-  if (!ADMIN_PASSWORD && !data.admin?.passwordHash) return true;
-  const sessionId = parseCookies(req).homedash_session;
-  const session = sessionId ? sessions.get(sessionId) : null;
-  if (!session) return false;
-  if (session.expiresAt < Date.now()) {
-    sessions.delete(sessionId);
-    return false;
-  }
-  return true;
-}
-
-function requireAuth(req, res) {
-  if (isAuthed(req)) return true;
-  sendJson(res, 401, { error: "Admin login required" });
-  return false;
-}
-
-function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
-  const hash = crypto.pbkdf2Sync(String(password), salt, 120000, 32, "sha256").toString("hex");
-  return `${salt}:${hash}`;
-}
-
-function verifyPassword(password, storedHash) {
-  if (ADMIN_PASSWORD && password === ADMIN_PASSWORD) return true;
-  if (!storedHash) return false;
-  const [salt, expectedHash] = storedHash.split(":");
-  if (!salt || !expectedHash) return false;
-  const actualHash = hashPassword(password, salt).split(":")[1];
-  return crypto.timingSafeEqual(Buffer.from(actualHash, "hex"), Buffer.from(expectedHash, "hex"));
-}
-
-function createAdminSession(res) {
-  const sessionId = crypto.randomUUID();
-  sessions.set(sessionId, { expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
-  setSessionCookie(res, sessionId);
-}
-
-function setSessionCookie(res, sessionId) {
-  res.setHeader("Set-Cookie", `homedash_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
-}
-
-function clearSessionCookie(res) {
-  res.setHeader("Set-Cookie", "homedash_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0");
-}
-
-function toPublicData(data, req) {
-  const { passwordHash, ...publicAdmin } = data.admin || {};
-  const authenticated = isAuthed(req);
-  const publicData = authenticated ? data : redactStatusSecrets(data);
-  return {
-    ...publicData,
-    app: {
-      name: "Homedash",
-      version: APP_VERSION
-    },
-    admin: {
-      ...publicAdmin,
-      enabled: Boolean(ADMIN_PASSWORD || passwordHash)
-    },
-    auth: {
-      enabled: Boolean(ADMIN_PASSWORD || passwordHash),
-      authenticated
-    }
-  };
-}
-
 function readAppVersion() {
   try {
     const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, "package.json"), "utf8"));
@@ -150,27 +79,6 @@ function readAppVersion() {
   } catch {
     return "0.0.0";
   }
-}
-
-function redactStatusSecrets(data) {
-  const redactTarget = (target) => target ? {
-    ...target,
-      tokenId: "",
-      tokenSecret: "",
-      apiKey: "",
-      username: "",
-      password: "",
-      headerValue: ""
-  } : target;
-  const profiles = (data.profiles || []).map((profile) => ({
-    ...profile,
-    statusTargets: (profile.statusTargets || []).map(redactTarget)
-  }));
-  return {
-    ...data,
-    profiles,
-    statusTargets: (data.statusTargets || []).map(redactTarget)
-  };
 }
 
 function suggestCategoryForLink({ title, url }) {
@@ -383,21 +291,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/homedash" && req.method === "GET") {
-      sendJson(res, 200, toPublicData(readData(), req));
+      sendJson(res, 200, auth.toPublicData(readData(), req));
       return;
     }
 
     if (url.pathname === "/api/homedash" && req.method === "PUT") {
-      if (!requireAuth(req, res)) return;
+      if (!auth.requireAuth(req, res)) return;
       const body = await readRequestBody(req);
       const saved = writeData(JSON.parse(body));
-      sendJson(res, 200, toPublicData(saved, req));
+      sendJson(res, 200, auth.toPublicData(saved, req));
       return;
     }
 
     if (url.pathname === "/api/setup" && req.method === "POST") {
       const current = readData();
-      if (current.setupComplete && (ADMIN_PASSWORD || current.admin?.passwordHash) && !isAuthed(req)) {
+      if (current.setupComplete && (ADMIN_PASSWORD || current.admin?.passwordHash) && !auth.isAuthed(req)) {
         sendJson(res, 409, { error: "Setup already completed" });
         return;
       }
@@ -414,37 +322,37 @@ const server = http.createServer(async (req, res) => {
         title: body.title || current.title,
         subtitle: body.subtitle || current.subtitle,
         theme: body.theme || current.theme,
-        admin: body.password ? { passwordHash: hashPassword(body.password) } : current.admin,
+        admin: body.password ? { passwordHash: auth.hashPassword(body.password) } : current.admin,
         activeProfileId: firstProfile.id,
         profiles: [firstProfile]
       });
       if (body.password) {
-        createAdminSession(res);
+        auth.shortcut(res, saved);
       }
-      sendJson(res, 200, toPublicData(saved, req));
+      sendJson(res, 200, auth.toPublicData(saved, req));
       return;
     }
 
     if (url.pathname === "/api/import" && req.method === "POST") {
-      if (!requireAuth(req, res)) return;
+      if (!auth.requireAuth(req, res)) return;
       const body = JSON.parse(await readRequestBody(req));
       const saved = writeData({ ...body, setupComplete: true });
-      sendJson(res, 200, toPublicData(saved, req));
+      sendJson(res, 200, auth.toPublicData(saved, req));
       return;
     }
 
     if (url.pathname === "/api/auth/status" && req.method === "GET") {
       const data = readData();
-      sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: isAuthed(req) });
+      sendJson(res, 200, auth.getAuthState(data, req));
       return;
     }
 
     if (url.pathname === "/api/auth/login" && req.method === "POST") {
       const body = JSON.parse(await readRequestBody(req));
       const data = readData();
-      if (!ADMIN_PASSWORD && !data.admin?.passwordHash || verifyPassword(body.password, data.admin?.passwordHash)) {
-        createAdminSession(res);
-        sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: true });
+      const result = auth.login(req, res, data, body.password);
+      if (result) {
+        sendJson(res, 200, result);
         return;
       }
       sendJson(res, 401, { error: "Invalid password" });
@@ -453,17 +361,13 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/auth/shortcut" && req.method === "POST") {
       const data = readData();
-      createAdminSession(res);
-      sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: true });
+      sendJson(res, 200, auth.shortcut(res, data));
       return;
     }
 
     if (url.pathname === "/api/auth/logout" && req.method === "POST") {
-      const sessionId = parseCookies(req).homedash_session;
-      if (sessionId) sessions.delete(sessionId);
-      clearSessionCookie(res);
       const data = readData();
-      sendJson(res, 200, { enabled: Boolean(ADMIN_PASSWORD || data.admin?.passwordHash), authenticated: false });
+      sendJson(res, 200, auth.logout(req, res, data));
       return;
     }
 
@@ -499,7 +403,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/homedash/export" && req.method === "GET") {
-      if (!requireAuth(req, res)) return;
+      if (!auth.requireAuth(req, res)) return;
       const data = JSON.stringify(readData(), null, 2);
       res.writeHead(200, {
         "Content-Type": "application/json; charset=utf-8",

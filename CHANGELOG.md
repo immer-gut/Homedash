@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.16.0 - 2026-06-25
+
+- Auth/Admin-Logik nach `server/auth.js` verschoben.
+- Sessions, Cookies, Passwort-Hashing, Login/Logout, Shortcut-Login und Public-Data-Redaction gebuendelt.
+- `server.js` weiter auf Routing, statische Dateien, Status-Dispatch und Service-Verdrahtung reduziert.
+- Standard-Image-Tag auf `v1.16.0` angehoben.
+
 ## v1.15.0 - 2026-06-25
 
 - Datenzugriff nach `server/data-store.js` verschoben.
