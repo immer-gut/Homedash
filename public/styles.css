@@ -573,8 +573,44 @@ textarea:focus {
   min-height: 0;
 }
 
+.date-widget {
+  min-height: 0;
+}
+
 .status-widget {
   min-height: 0;
+}
+
+.date-countdown {
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  min-height: 92px;
+  border: 1px solid color-mix(in srgb, var(--accent), transparent 62%);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 88%), transparent),
+    rgba(0, 0, 0, 0.12);
+}
+
+.date-countdown-value {
+  color: var(--text);
+  font-size: 2rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.date-countdown-text {
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.date-countdown small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
 }
 
 .weather-widget {
@@ -1732,12 +1768,17 @@ dialog::backdrop {
   width: 100%;
 }
 
-.weather-settings {
+.weather-settings,
+.date-settings {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 0.8fr));
   gap: 8px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
+}
+
+.date-settings {
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
 }
 
 .subtle-button {
@@ -1934,7 +1975,8 @@ dialog::backdrop {
 
   .widgets,
   .link-test-row,
-  .weather-settings {
+  .weather-settings,
+  .date-settings {
     grid-template-columns: 1fr;
   }
 

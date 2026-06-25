@@ -42,6 +42,11 @@ const defaultData = {
       label: "Zuhause",
       latitude: "",
       longitude: ""
+    },
+    dateCountdown: {
+      enabled: false,
+      label: "Datum",
+      date: ""
     }
   },
   preferences: {
@@ -249,12 +254,22 @@ function normalizeWidgets(widgets) {
     statusOverview: widgets?.statusOverview === true,
     linkStats: widgets?.linkStats === true,
     weather: normalizeWeatherWidget(widgets?.weather),
+    dateCountdown: normalizeDateCountdownWidget(widgets?.dateCountdown),
     notes: notes
       .map((note) => ({
         id: String(note.id || crypto.randomUUID()),
         text: String(note.text || "").trim().slice(0, 500)
       }))
       .filter((note) => note.text)
+  };
+}
+
+function normalizeDateCountdownWidget(widget) {
+  const rawDate = String(widget?.date || "").trim();
+  return {
+    enabled: widget?.enabled === true,
+    label: String(widget?.label || "Datum").trim().slice(0, 40) || "Datum",
+    date: /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : ""
   };
 }
 

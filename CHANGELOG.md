@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.8.0 - 2026-06-25
+
+- Neues Datums-Widget ergaenzt.
+- Das Widget berechnet Tage bis zu einem zukuenftigen Datum oder Tage seit einem vergangenen Datum.
+- Datums-Widget in den Einstellungen mit Titel und Datum konfigurierbar.
+- Standard-Image-Tag auf `v1.8.0` angehoben.
+
 ## v1.7.5 - 2026-06-11
 
 - Statusuebersicht zeigt jetzt alle Widget-Metriken an.
