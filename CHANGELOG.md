@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.9.0 - 2026-06-25
+
+- Erste Frontend-Widget-Registry eingefuehrt.
+- Rendering fuer Wetter, Statusuebersicht, Linkstatistik, Datums-Eintraege und Notizen vereinheitlicht.
+- Widget-Einstellungen fuer Wetter, Statusuebersicht, Linkstatistik und Datums-Eintraege ueber eine gemeinsame Settings-Registry gebuendelt.
+- Keine Aenderung an den Status-Integrationen selbst.
+- Standard-Image-Tag auf `v1.9.0` angehoben.
+
 ## v1.8.3 - 2026-06-25
 
 - Systemstatus-Widget wieder vollbreit dargestellt, wenn Datums-Eintraege darueber aktiv sind.

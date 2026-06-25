@@ -177,6 +177,72 @@ const categoryIcons = [
 
 const categoryColors = ["#35f0ff", "#56ff8f", "#ffb238", "#ff4f7a", "#c471ff", "#4aa8ff", "#ff6f3c"];
 
+const widgetRegistry = [
+  { id: "weather", render: renderWeather, isHidden: () => elements.weatherWidget.hidden },
+  { id: "statusOverview", render: renderStatus, isHidden: () => elements.statusWidget.hidden },
+  { id: "linkStats", render: renderStatsWidget, isHidden: () => elements.statsWidget.hidden },
+  { id: "dateCountdown", render: renderDateCountdowns, isHidden: () => elements.dateCountdownWidget.hidden },
+  { id: "notes", render: renderNotesWidget, isHidden: () => elements.notesWidget.hidden }
+];
+
+const widgetSettingsRegistry = [
+  {
+    id: "linkStats",
+    load: () => {
+      elements.settingShowStatsWidget.checked = state.widgets?.linkStats === true;
+    },
+    save: (widgets) => {
+      widgets.linkStats = elements.settingShowStatsWidget.checked;
+    }
+  },
+  {
+    id: "statusOverview",
+    load: () => {
+      elements.settingShowStatusWidget.checked = state.widgets?.statusOverview === true;
+    },
+    save: (widgets) => {
+      widgets.statusOverview = elements.settingShowStatusWidget.checked;
+    }
+  },
+  {
+    id: "weather",
+    load: () => {
+      elements.settingShowWeatherWidget.checked = state.widgets?.weather?.enabled === true;
+      elements.settingWeatherLabel.value = state.widgets?.weather?.label || "Zuhause";
+      elements.settingWeatherLatitude.value = state.widgets?.weather?.latitude || "";
+      elements.settingWeatherLongitude.value = state.widgets?.weather?.longitude || "";
+      renderWeatherSettings();
+    },
+    save: (widgets) => {
+      widgets.weather = {
+        ...(state.widgets?.weather || {}),
+        enabled: elements.settingShowWeatherWidget.checked,
+        label: elements.settingWeatherLabel.value.trim() || "Zuhause",
+        latitude: elements.settingWeatherLatitude.value.trim(),
+        longitude: elements.settingWeatherLongitude.value.trim()
+      };
+    }
+  },
+  {
+    id: "dateCountdown",
+    load: () => {
+      elements.settingShowDateWidget.checked = state.widgets?.dateCountdown?.enabled === true;
+      dateCountdownDrafts = getDateCountdownItems(state.widgets?.dateCountdown);
+      if (!dateCountdownDrafts.length) dateCountdownDrafts = [{ id: createId(), label: "Datum", date: "" }];
+      renderDateSettings();
+    },
+    save: (widgets) => {
+      widgets.dateCountdown = {
+        ...(state.widgets?.dateCountdown || {}),
+        enabled: elements.settingShowDateWidget.checked,
+        items: dateCountdownDrafts
+          .map(normalizeDateCountdownItem)
+          .filter((item) => item.label || item.date)
+      };
+    }
+  }
+];
+
 function activeProfile() {
   return state.profiles.find((profile) => profile.id === state.activeProfileId) || state.profiles[0] || {
     id: "default",
@@ -341,14 +407,15 @@ function renderProfiles() {
 }
 
 function renderWidgets() {
+  widgetRegistry.forEach((widget) => widget.render());
+  elements.widgets.hidden = widgetRegistry.every((widget) => widget.isHidden());
+}
+
+function renderNotesWidget() {
   const notes = getNotes();
-  renderWeather();
-  renderStatus();
-  renderStatsWidget();
-  renderDateCountdowns();
   const notesHidden = state.preferences?.showNotes === false || (!notes.length && !state.noteComposerOpen);
   elements.notesWidget.hidden = notesHidden;
-  elements.widgets.hidden = notesHidden && elements.statusWidget.hidden && elements.statsWidget.hidden && elements.dateCountdownWidget.hidden;
+  if (notesHidden) return;
   elements.noteInput.disabled = !canEdit();
   elements.addNoteButton.disabled = !canEdit();
   elements.notesList.replaceChildren(...notes.map(createNoteCard));
@@ -1174,18 +1241,12 @@ function openSettingsDialog() {
   elements.settingOpenLinksInNewTab.checked = state.preferences?.openLinksInNewTab !== false;
   elements.settingStartpageMode.checked = state.preferences?.startpageMode !== false;
   elements.settingShareMode.checked = state.preferences?.shareMode === true;
-  elements.settingShowStatsWidget.checked = state.widgets?.linkStats === true;
-  elements.settingShowStatusWidget.checked = state.widgets?.statusOverview === true;
-  elements.settingShowWeatherWidget.checked = state.widgets?.weather?.enabled === true;
-  elements.settingShowDateWidget.checked = state.widgets?.dateCountdown?.enabled === true;
-  dateCountdownDrafts = getDateCountdownItems(state.widgets?.dateCountdown);
-  if (!dateCountdownDrafts.length) dateCountdownDrafts = [{ id: createId(), label: "Datum", date: "" }];
-  elements.settingWeatherLabel.value = state.widgets?.weather?.label || "Zuhause";
-  elements.settingWeatherLatitude.value = state.widgets?.weather?.latitude || "";
-  elements.settingWeatherLongitude.value = state.widgets?.weather?.longitude || "";
-  renderWeatherSettings();
-  renderDateSettings();
+  loadWidgetSettings();
   elements.settingsDialog.showModal();
+}
+
+function loadWidgetSettings() {
+  widgetSettingsRegistry.forEach((widget) => widget.load());
 }
 
 function renderWeatherSettings() {
@@ -1506,28 +1567,16 @@ async function saveSettings() {
     startpageMode: elements.settingStartpageMode.checked,
     shareMode: elements.settingShareMode.checked
   };
-  state.widgets = {
-    ...(state.widgets || {}),
-    linkStats: elements.settingShowStatsWidget.checked,
-    statusOverview: elements.settingShowStatusWidget.checked,
-    dateCountdown: {
-      ...(state.widgets?.dateCountdown || {}),
-      enabled: elements.settingShowDateWidget.checked,
-      items: dateCountdownDrafts
-        .map(normalizeDateCountdownItem)
-        .filter((item) => item.label || item.date)
-    },
-    weather: {
-      ...(state.widgets?.weather || {}),
-      enabled: elements.settingShowWeatherWidget.checked,
-      label: elements.settingWeatherLabel.value.trim() || "Zuhause",
-      latitude: elements.settingWeatherLatitude.value.trim(),
-      longitude: elements.settingWeatherLongitude.value.trim()
-    }
-  };
+  state.widgets = collectWidgetSettings();
   await saveData("Einstellungen gespeichert");
   elements.settingsDialog.close();
   loadWeather().catch(() => {});
+}
+
+function collectWidgetSettings() {
+  const widgets = { ...(state.widgets || {}) };
+  widgetSettingsRegistry.forEach((widget) => widget.save(widgets));
+  return widgets;
 }
 
 function openProfileDialog() {
