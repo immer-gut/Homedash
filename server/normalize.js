@@ -286,7 +286,7 @@ function normalizeCategories(categories, links) {
 
   for (const link of links) {
     if (!seen.has(link.category)) {
-      normalizedCategories.push({ id: crypto.randomUUID(), name: link.category, icon: "folder", color: "#35f0ff", visible: true });
+      normalizedCategories.push({ id: crypto.randomUUID(), name: link.category, icon: "link", color: "#35f0ff", visible: true });
       seen.add(link.category);
     }
   }
@@ -297,9 +297,9 @@ function normalizeCategories(categories, links) {
 
 function normalizeCategoryIcon(icon) {
   const normalized = String(icon || "").toLowerCase();
-  return ["star", "server", "network", "home", "shield", "tool", "media", "briefcase", "game", "link", "folder"].includes(normalized)
+  return ["star", "server", "network", "home", "shield", "tool", "media", "briefcase", "game", "link"].includes(normalized)
     ? normalized
-    : "folder";
+    : "link";
 }
 
 function normalizeCategoryColor(color) {

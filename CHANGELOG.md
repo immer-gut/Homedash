@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.16.1 - 2026-06-25
+
+- Kategorie-Icon `Ordner` aus dem Kategorien-Dialog entfernt.
+- Neue und automatisch erzeugte Kategorien verwenden jetzt `Link` als Fallback-Icon.
+- Alte `folder`-Iconwerte werden beim Normalisieren auf `link` umgestellt.
+- Standard-Image-Tag auf `v1.16.1` angehoben.
+
 ## v1.16.0 - 2026-06-25
 
 - Auth/Admin-Logik nach `server/auth.js` verschoben.

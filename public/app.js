@@ -162,7 +162,6 @@ let compactLayoutTimer = null;
 let dateCountdownDrafts = [];
 
 const categoryIcons = [
-  ["folder", "Ordner"],
   ["star", "Stern"],
   ["briefcase", "Business"],
   ["server", "Server"],
@@ -873,7 +872,7 @@ function getCategoryNames() {
 function getCategoryMeta(name) {
   const category = (state.categories || []).find((candidate) => candidate.name === name) || {};
   return {
-    icon: category.icon || "folder",
+    icon: category.icon || "link",
     color: normalizeColor(category.color || "#35f0ff"),
     visible: category.visible !== false
   };
@@ -1313,7 +1312,7 @@ function openCategoriesDialog() {
       id: category?.id || createId(),
       originalName: name,
       name,
-      icon: category?.icon || "folder",
+      icon: category?.icon || "link",
       color: normalizeColor(category?.color || "#35f0ff"),
       visible: category?.visible !== false
     };
@@ -1349,7 +1348,7 @@ function renderCategoryEditor(focusId = "") {
         option.textContent = label;
         return option;
       }));
-      iconSelect.value = category.icon || "folder";
+      iconSelect.value = category.icon || "link";
       iconSelect.addEventListener("change", (event) => {
         category.icon = event.target.value;
       });
@@ -1393,7 +1392,7 @@ function renderCategoryEditor(focusId = "") {
 
 function addCategory() {
   const id = createId();
-  categoryDrafts.push({ id, originalName: "", name: "", icon: "folder", color: categoryColors[categoryDrafts.length % categoryColors.length], visible: true });
+  categoryDrafts.push({ id, originalName: "", name: "", icon: "link", color: categoryColors[categoryDrafts.length % categoryColors.length], visible: true });
   renderCategoryEditor(id);
 }
 
@@ -1404,7 +1403,7 @@ async function saveCategories() {
       id: category.id || createId(),
       originalName: category.originalName,
       name: category.name.trim(),
-      icon: category.icon || "folder",
+      icon: category.icon || "link",
       color: normalizeColor(category.color),
       visible: category.visible !== false
     }))
@@ -1439,7 +1438,7 @@ function upsertCategoryFromLink(name) {
   state.categories.push({
     id: createId(),
     name: categoryName,
-    icon: "folder",
+    icon: "link",
     color: categoryColors[state.categories.length % categoryColors.length],
     visible: true
   });
@@ -1740,7 +1739,7 @@ async function importBookmarks(html) {
   if (!nextLinks.length) throw new Error("Keine neuen Bookmarks gefunden");
   state.categories = [...knownCategories].map((name) => {
     const existing = state.categories.find((category) => category.name === name);
-    return existing || { id: createId(), name, icon: "folder", color: categoryColors[state.categories.length % categoryColors.length], visible: true };
+    return existing || { id: createId(), name, icon: "link", color: categoryColors[state.categories.length % categoryColors.length], visible: true };
   }).sort((a, b) => compareNames(a.name, b.name));
   state.links = [...state.links, ...nextLinks];
   await saveData("Bookmarks importiert");
@@ -1755,10 +1754,10 @@ function parseBookmarkHtml(html) {
     let child = node.firstElementChild;
     while (child) {
       if (child.tagName === "DT") {
-        const folder = child.querySelector(":scope > h3");
+        const heading = child.querySelector(":scope > h3");
         const link = child.querySelector(":scope > a");
-        if (folder) {
-          const nextCategory = folder.textContent.trim() || category;
+        if (heading) {
+          const nextCategory = heading.textContent.trim() || category;
           const nested = child.querySelector(":scope > dl") || (child.nextElementSibling?.tagName === "DL" ? child.nextElementSibling : null);
           if (nested) visit(nested, nextCategory);
         } else if (link) {
