@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.19.0 - 2026-06-25
+
+- Status-UI in `public/status-ui.js` ausgelagert.
+- Statusuebersicht, Link-Statusanzeigen, Home-Assistant-Sensorwerte, Statusdetails und Status-Matching sind jetzt gebuendelt.
+- `public/app.js` nutzt fuer Statusdarstellung nur noch den Status-UI-Controller.
+- Keine geplante Aenderung an Status-API, UI oder gespeicherten Daten.
+- Standard-Image-Tag auf `v1.19.0` angehoben.
+
 ## v1.18.0 - 2026-06-25
 
 - Kategorien-Logik in `public/categories.js` ausgelagert.
