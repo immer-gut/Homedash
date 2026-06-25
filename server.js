@@ -17,12 +17,7 @@ const { createAuthService } = require("./server/auth");
 const { createDataStore } = require("./server/data-store");
 const { createLinkMetadataService } = require("./server/link-metadata");
 const { createWeatherService } = require("./server/weather");
-const { readProxmoxStatus } = require("./server/status/proxmox");
-const { readProxmoxBackupStatus } = require("./server/status/proxmox-backup");
-const { readHomeAssistantStatus } = require("./server/status/home-assistant");
-const { readGenericServiceStatus } = require("./server/status/generic");
-const { readUnraidStatus } = require("./server/status/unraid");
-const { readAmpStatus } = require("./server/status/amp");
+const { readStatusWithProvider } = require("./server/status");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -212,18 +207,7 @@ async function readStatusTarget(target) {
   };
 
   try {
-    if (target.enabled === false) {
-      return { ...base, message: "Deaktiviert", metrics: [{ label: "Status", value: "Aus" }] };
-    }
-    if (target.type === "proxmox") return await readProxmoxStatus(target, base);
-    if (target.type === "proxmoxbackup") return await readProxmoxBackupStatus(target, base);
-    if (target.type === "unraid" && target.apiKey) return await readUnraidStatus(target, base);
-    if (target.type === "amp" && target.username && target.password) return await readAmpStatus(target, base);
-    if (target.type === "homeassistant") {
-      if (!target.apiKey) return { ...base, message: "Home Assistant Token fehlt" };
-      return await readHomeAssistantStatus(target, base);
-    }
-    return await readGenericServiceStatus(target, base);
+    return await readStatusWithProvider(target, base);
   } catch (error) {
     return {
       ...base,

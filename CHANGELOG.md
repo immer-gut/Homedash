@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.17.0 - 2026-06-25
+
+- Status-Provider-Registry in `server/status/index.js` eingefuehrt.
+- `server.js` nutzt die Registry fuer Proxmox VE, Proxmox Backup Server, Home Assistant, Unraid, AMP und Generic HTTP.
+- Provider-spezifische Voraussetzungen wie Token oder Login liegen jetzt beim jeweiligen Provider-Eintrag.
+- Keine geplante Aenderung an Status-API, UI oder gespeicherten Daten.
+- Standard-Image-Tag auf `v1.17.0` angehoben.
+
 ## v1.16.2 - 2026-06-25
 
 - Icon-Auswahl aus dem Kategorien-Dialog entfernt.
