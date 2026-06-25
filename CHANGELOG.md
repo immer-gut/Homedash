@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.10.0 - 2026-06-25
+
+- Server-Normalisierung in `server/normalize.js` ausgelagert.
+- Default-Datenmodell zentralisiert, damit neue Datenfelder nicht mehr direkt in `server.js` verteilt werden.
+- Vorbereitung fuer weitere Backend-Aufteilung ohne Aenderung an Status-Integrationen oder UI-Verhalten.
+- Standard-Image-Tag auf `v1.10.0` angehoben.
+
 ## v1.9.0 - 2026-06-25
 
 - Erste Frontend-Widget-Registry eingefuehrt.
