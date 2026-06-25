@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.13.0 - 2026-06-25
+
+- AMP-Statusintegration nach `server/status/amp.js` verschoben.
+- Damit liegen alle Status-Provider unter `server/status/`.
+- `server.js` weiter auf Routing, Datenfluss, Wetter, Link-Metadaten und Admin/Auth reduziert.
+- Standard-Image-Tag auf `v1.13.0` angehoben.
+
 ## v1.12.0 - 2026-06-25
 
 - Home-Assistant-Statusintegration nach `server/status/home-assistant.js` verschoben.
