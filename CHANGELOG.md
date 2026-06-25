@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.11.0 - 2026-06-25
+
+- Gemeinsame HTTP-Helfer aus `server.js` nach `server/http.js` ausgelagert.
+- Proxmox-VE-Statusintegration nach `server/status/proxmox.js` verschoben.
+- Proxmox-Backup-Server-Statusintegration nach `server/status/proxmox-backup.js` verschoben.
+- Keine geplante Aenderung an Status-API, UI oder gespeicherten Daten.
+- Standard-Image-Tag auf `v1.11.0` angehoben.
+
 ## v1.10.1 - 2026-06-25
 
 - Docker-Image korrigiert: das neue `server/`-Verzeichnis wird jetzt ins Image kopiert.
