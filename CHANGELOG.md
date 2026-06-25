@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.10.1 - 2026-06-25
+
+- Docker-Image korrigiert: das neue `server/`-Verzeichnis wird jetzt ins Image kopiert.
+- Behebt Container-Restarts nach `v1.10.0`, weil `server/normalize.js` im Image fehlte.
+- Standard-Image-Tag auf `v1.10.1` angehoben.
+
 ## v1.10.0 - 2026-06-25
 
 - Server-Normalisierung in `server/normalize.js` ausgelagert.

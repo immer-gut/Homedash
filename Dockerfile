@@ -7,6 +7,7 @@ LABEL org.opencontainers.image.licenses="MIT"
 
 WORKDIR /app
 COPY package.json server.js ./
+COPY server ./server
 COPY public ./public
 
 ENV NODE_ENV=production
