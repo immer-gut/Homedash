@@ -4,9 +4,6 @@ const path = require("path");
 const crypto = require("crypto");
 
 const {
-  createDefaultData,
-  migrateData,
-  normalizeData,
   normalizeHomeAssistantEntities,
   normalizeProfile,
   normalizeStatusWidget,
@@ -16,6 +13,7 @@ const {
 const {
   requestHead
 } = require("./server/http");
+const { createDataStore } = require("./server/data-store");
 const { createLinkMetadataService } = require("./server/link-metadata");
 const { createWeatherService } = require("./server/weather");
 const { readProxmoxStatus } = require("./server/status/proxmox");
@@ -28,7 +26,6 @@ const { readAmpStatus } = require("./server/status/amp");
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
 const DATA_DIR = process.env.DATA_DIR || "/data";
-const DATA_FILE = path.join(DATA_DIR, "homedash.json");
 const FAVICON_DIR = path.join(DATA_DIR, "favicons");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
@@ -36,7 +33,15 @@ const STATUS_TARGETS = parseStatusTargets(process.env.HOMEDASH_STATUS_TARGETS ||
 const APP_VERSION = readAppVersion();
 const sessions = new Map();
 
-const defaultData = createDefaultData();
+const {
+  ensureDataFile,
+  readData,
+  readDataWithoutMigration,
+  writeData
+} = createDataStore({
+  dataDir: DATA_DIR,
+  faviconDir: FAVICON_DIR
+});
 const { readLinkMetadata, serveFavicon } = createLinkMetadataService({
   faviconDir: FAVICON_DIR,
   suggestCategoryForLink
@@ -51,91 +56,6 @@ const mimeTypes = {
   ".svg": "image/svg+xml; charset=utf-8",
   ".ico": "image/x-icon"
 };
-
-function ensureDataFile() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  fs.mkdirSync(FAVICON_DIR, { recursive: true });
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(defaultData, null, 2));
-  }
-}
-
-function readData() {
-  ensureDataFile();
-  const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-  const migrated = migrateData(data);
-  if (JSON.stringify(migrated) !== JSON.stringify(data)) {
-    fs.writeFileSync(DATA_FILE, `${JSON.stringify(migrated, null, 2)}\n`);
-  }
-  return migrated;
-}
-
-function writeData(data) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const existing = fs.existsSync(DATA_FILE) ? JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) : {};
-  const mergedData = preserveExistingStatusSecrets(data, existing);
-  const safeData = normalizeData({
-    ...mergedData,
-    admin: {
-      ...existing.admin,
-      ...mergedData.admin
-    },
-    schemaVersion: mergedData.schemaVersion || 6
-  });
-  fs.writeFileSync(DATA_FILE, `${JSON.stringify(safeData, null, 2)}\n`);
-  return safeData;
-}
-
-function preserveExistingStatusSecrets(incoming, existing) {
-  const existingWidgets = new Map();
-  for (const profile of Array.isArray(existing.profiles) ? existing.profiles : []) {
-    for (const target of Array.isArray(profile.statusTargets) ? profile.statusTargets : []) {
-      if (target.id) existingWidgets.set(String(target.id), target);
-    }
-    for (const link of Array.isArray(profile.links) ? profile.links : []) {
-      if (link.id && link.statusWidget) existingWidgets.set(String(link.id), link.statusWidget);
-    }
-  }
-  for (const link of Array.isArray(existing.links) ? existing.links : []) {
-    if (link.id && link.statusWidget && !existingWidgets.has(String(link.id))) {
-      existingWidgets.set(String(link.id), link.statusWidget);
-    }
-  }
-
-  const mergeTarget = (target) => {
-    if (!target?.id) return target;
-    const existingWidget = existingWidgets.get(String(target.id));
-    if (!existingWidget || String(existingWidget.type || "basic").toLowerCase() !== String(target.type || "basic").toLowerCase()) {
-      return target;
-    }
-    return preserveStatusWidgetSecrets(target, existingWidget);
-  };
-
-  return {
-    ...incoming,
-    profiles: Array.isArray(incoming.profiles)
-      ? incoming.profiles.map((profile) => ({
-          ...profile,
-          statusTargets: Array.isArray(profile.statusTargets) ? profile.statusTargets.map(mergeTarget) : profile.statusTargets,
-          links: Array.isArray(profile.links)
-            ? profile.links.map((link) => link?.statusWidget ? { ...link, statusWidget: mergeTarget({ id: link.id, ...link.statusWidget }) } : link)
-            : profile.links
-        }))
-      : incoming.profiles,
-    links: incoming.links
-  };
-}
-
-function preserveStatusWidgetSecrets(incoming, existing) {
-  const fields = ["tokenId", "tokenSecret", "apiKey", "username", "password", "headerValue"];
-  const merged = { ...incoming };
-  for (const field of fields) {
-    if (String(merged[field] || "") === "" && String(existing[field] || "") !== "") {
-      merged[field] = existing[field];
-    }
-  }
-  return merged;
-}
 
 function sendJson(res, status, payload) {
   const body = JSON.stringify(payload);
@@ -172,11 +92,6 @@ function requireAuth(req, res) {
   if (isAuthed(req)) return true;
   sendJson(res, 401, { error: "Admin login required" });
   return false;
-}
-
-function readDataWithoutMigration() {
-  ensureDataFile();
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
 }
 
 function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
