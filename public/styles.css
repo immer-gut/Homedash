@@ -1931,7 +1931,7 @@ dialog::backdrop {
 
 .category-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1fr) minmax(120px, 0.45fr) 46px auto auto;
+  grid-template-columns: minmax(160px, 1fr) 46px auto auto;
   gap: 8px;
   align-items: center;
   border: 1px solid var(--line);

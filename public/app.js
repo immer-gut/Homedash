@@ -161,19 +161,6 @@ let linkMetadataAbort = null;
 let compactLayoutTimer = null;
 let dateCountdownDrafts = [];
 
-const categoryIcons = [
-  ["star", "Stern"],
-  ["briefcase", "Business"],
-  ["server", "Server"],
-  ["network", "Netzwerk"],
-  ["home", "Smart Home"],
-  ["shield", "Sicherheit"],
-  ["tool", "Werkstatt"],
-  ["media", "Medien"],
-  ["game", "Game"],
-  ["link", "Link"]
-];
-
 const categoryColors = ["#35f0ff", "#56ff8f", "#ffb238", "#ff4f7a", "#c471ff", "#4aa8ff", "#ff6f3c"];
 
 const widgetRegistry = [
@@ -1340,18 +1327,6 @@ function renderCategoryEditor(focusId = "") {
           saveCategories().catch((error) => showToast(error.message));
         }
       });
-      const iconSelect = document.createElement("select");
-      iconSelect.ariaLabel = "Kategorie-Icon";
-      iconSelect.replaceChildren(...categoryIcons.map(([value, label]) => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = label;
-        return option;
-      }));
-      iconSelect.value = category.icon || "link";
-      iconSelect.addEventListener("change", (event) => {
-        category.icon = event.target.value;
-      });
       const color = document.createElement("input");
       color.type = "color";
       color.value = normalizeColor(category.color || "#35f0ff");
@@ -1378,7 +1353,7 @@ function renderCategoryEditor(focusId = "") {
         categoryDrafts = categoryDrafts.filter((candidate) => candidate.id !== category.id);
         renderCategoryEditor();
       });
-      row.append(input, iconSelect, color, visibleLabel, remove);
+      row.append(input, color, visibleLabel, remove);
       if (category.id === focusId) {
         window.requestAnimationFrame(() => {
           input.focus();

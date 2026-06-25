@@ -2,12 +2,12 @@
 
 Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
-Aktuelle Version: `v1.16.1`
+Aktuelle Version: `v1.16.2`
 
 ## Funktionen
 
 - Browserbasierte Pflege von Links, Kategorien, Profilen, Notizen, Titel und Untertitel
-- Kategorie-Icons und Farben fuer bessere Gruppierung
+- Kategorie-Farben und Sichtbarkeit fuer bessere Gruppierung
 - Einklappbare Suche ueber Linktitel, Kategorie und Notiz, auch per `Cmd+K`/`Ctrl+K`
 - Automatisch gruppierte Kategorien mit alphabetischer Sortierung
 - JSON-Backup/Restore in der UI
@@ -51,7 +51,7 @@ In Portainer kannst du Homedash als Git-Stack deployen.
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.16.1
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.16.2
 HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
@@ -64,14 +64,14 @@ Testhinweise fuer Portainer:
 - Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
-- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.16.1` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
+- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.16.2` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
   homedash:
-    image: ghcr.io/immer-gut/homedash:v1.16.1
+    image: ghcr.io/immer-gut/homedash:v1.16.2
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -103,7 +103,7 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.16.1` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.16.2` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
 | `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
@@ -121,7 +121,7 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.16.1
+ghcr.io/immer-gut/homedash:v1.16.2
 ```
 
 Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `vX.Y.Z`, zum Beispiel `v1.1.1`, erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
@@ -137,7 +137,7 @@ Homedash nutzt ab `v1.1.0` semantische Versionierung:
 Fuer Portainer wird ein gepinnter Image-Tag empfohlen:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.16.1
+ghcr.io/immer-gut/homedash:v1.16.2
 ```
 
 `latest` bleibt verfuegbar, ist aber beweglich. Praktisch fuer Tests, weniger praktisch, wenn man spaeter wissen will, was eigentlich laeuft. Verrueckte Idee, ich weiss.
@@ -284,7 +284,7 @@ Im Browser-Menue `Einstellungen` kannst du Titel und Untertitel pflegen und Anze
 - Notizenbereich anzeigen
 - Links in neuem Tab oeffnen
 
-Kategorien koennen im Kategorien-Dialog neben dem Namen auch ein Icon und eine Farbe bekommen. Das fruehere Ordner-Icon wird nicht mehr angeboten; fehlende oder alte Ordner-Werte werden als Link-Icon behandelt.
+Kategorien koennen im Kategorien-Dialog neben dem Namen auch eine Farbe bekommen. Die fruehere Icon-Auswahl ist entfernt; fehlende oder alte Ordner-Werte werden intern als Link-Icon behandelt.
 
 Kategorien koennen im Kategorien-Dialog auch ausgeblendet werden. Die Links bleiben gespeichert, werden aber nicht mehr als normale Linkkarten oder leere Kategorien auf der Startseite angezeigt.
 
@@ -355,7 +355,7 @@ docker compose up -d
 Portainer Update:
 
 1. Stack oeffnen.
-2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.16.1`.
+2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.16.2`.
 3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
 4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 

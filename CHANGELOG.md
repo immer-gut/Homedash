@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.16.2 - 2026-06-25
+
+- Icon-Auswahl aus dem Kategorien-Dialog entfernt.
+- Kategorien zeigen im Dialog nur noch Name, Farbe, Sichtbarkeit und Loeschen.
+- Bestehende Iconwerte bleiben intern erhalten; fehlende oder alte Ordner-Werte fallen weiter auf Link zurueck.
+- Standard-Image-Tag auf `v1.16.2` angehoben.
+
 ## v1.16.1 - 2026-06-25
 
 - Kategorie-Icon `Ordner` aus dem Kategorien-Dialog entfernt.
