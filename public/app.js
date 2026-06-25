@@ -51,6 +51,7 @@ const elements = {
   statusList: document.querySelector("#statusList"),
   statusUpdated: document.querySelector("#statusUpdated"),
   refreshStatusButton: document.querySelector("#refreshStatusButton"),
+  dateCountdownWidget: document.querySelector("#dateCountdownWidget"),
   statsWidget: document.querySelector("#statsWidget"),
   statsList: document.querySelector("#statsList"),
   dateCountdownList: document.querySelector("#dateCountdownList"),
@@ -347,7 +348,7 @@ function renderWidgets() {
   renderDateCountdowns();
   const notesHidden = state.preferences?.showNotes === false || (!notes.length && !state.noteComposerOpen);
   elements.notesWidget.hidden = notesHidden;
-  elements.widgets.hidden = notesHidden && elements.statusWidget.hidden && elements.statsWidget.hidden;
+  elements.widgets.hidden = notesHidden && elements.statusWidget.hidden && elements.statsWidget.hidden && elements.dateCountdownWidget.hidden;
   elements.noteInput.disabled = !canEdit();
   elements.addNoteButton.disabled = !canEdit();
   elements.notesList.replaceChildren(...notes.map(createNoteCard));
@@ -356,8 +357,8 @@ function renderWidgets() {
 function renderDateCountdowns() {
   const config = state.widgets?.dateCountdown || {};
   const items = getDateCountdownItems(config);
-  elements.dateCountdownList.hidden = config.enabled !== true || !items.length;
-  if (elements.dateCountdownList.hidden) {
+  elements.dateCountdownWidget.hidden = config.enabled !== true || !items.length;
+  if (elements.dateCountdownWidget.hidden) {
     elements.dateCountdownList.replaceChildren();
     return;
   }

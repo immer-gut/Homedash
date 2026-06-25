@@ -577,12 +577,15 @@ textarea:focus {
   min-height: 0;
 }
 
+.date-countdown-widget {
+  grid-column: 1 / -1;
+  min-height: 0;
+}
+
 .date-countdown-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: end;
-  gap: 8px;
-  max-width: min(620px, 46vw);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 10px;
 }
 
 .date-countdown-card {
@@ -590,8 +593,7 @@ textarea:focus {
   grid-template-columns: auto auto;
   gap: 2px 8px;
   align-content: center;
-  min-width: 132px;
-  min-height: 60px;
+  min-height: 76px;
   border: 1px solid color-mix(in srgb, var(--accent), transparent 62%);
   border-radius: 8px;
   padding: 8px 10px;
@@ -617,7 +619,7 @@ textarea:focus {
 
 .date-countdown-value {
   color: var(--text);
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 850;
   line-height: 1;
 }
@@ -625,7 +627,7 @@ textarea:focus {
 .date-countdown-text {
   align-self: center;
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.1;
 }
@@ -633,7 +635,7 @@ textarea:focus {
 .date-countdown-card small {
   grid-column: 1 / -1;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 750;
 }
 
@@ -2028,11 +2030,6 @@ dialog::backdrop {
   .topbar-cards {
     flex-direction: column-reverse;
     align-items: end;
-  }
-
-  .date-countdown-list {
-    justify-content: end;
-    max-width: min(100%, 300px);
   }
 
   .weather-widget {

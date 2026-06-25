@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.8.2 - 2026-06-25
+
+- Datums-Eintraege als vollbreite Leiste oberhalb der Systemstatus-Uebersicht platziert.
+- Datums-Karten verteilen sich automatisch je nach Anzahl der Eintraege.
+- Standard-Image-Tag auf `v1.8.2` angehoben.
+
 ## v1.8.1 - 2026-06-25
 
 - Datums-Widget auf mehrere Datums-Eintraege erweitert.

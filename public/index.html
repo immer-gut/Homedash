@@ -16,7 +16,6 @@
           <p class="app-version" id="appVersion">v--</p>
         </div>
         <div class="topbar-cards">
-          <div class="date-countdown-list" id="dateCountdownList" hidden></div>
           <article class="weather-widget" id="weatherWidget" hidden>
             <header class="weather-header">
               <span id="weatherLabel">Wetter</span>
@@ -50,6 +49,9 @@
       </section>
 
       <section id="widgets" class="widgets" aria-label="Widgets">
+        <article class="widget date-countdown-widget" id="dateCountdownWidget" hidden>
+          <div class="date-countdown-list" id="dateCountdownList"></div>
+        </article>
         <article class="widget status-widget" id="statusWidget" hidden>
           <header class="widget-header">
             <p>Systemstatus</p>
