@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.12.0 - 2026-06-25
+
+- Home-Assistant-Statusintegration nach `server/status/home-assistant.js` verschoben.
+- Generic-HTTP-Statusintegration nach `server/status/generic.js` verschoben.
+- Unraid-Statusintegration nach `server/status/unraid.js` verschoben.
+- `server.js` weiter auf Routing, Datenfluss, Wetter, Link-Metadaten und AMP reduziert.
+- Standard-Image-Tag auf `v1.12.0` angehoben.
+
 ## v1.11.0 - 2026-06-25
 
 - Gemeinsame HTTP-Helfer aus `server.js` nach `server/http.js` ausgelagert.

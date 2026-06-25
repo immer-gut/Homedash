@@ -23,6 +23,9 @@ const {
 } = require("./server/http");
 const { readProxmoxStatus } = require("./server/status/proxmox");
 const { readProxmoxBackupStatus } = require("./server/status/proxmox-backup");
+const { readHomeAssistantStatus } = require("./server/status/home-assistant");
+const { readGenericServiceStatus } = require("./server/status/generic");
+const { readUnraidStatus } = require("./server/status/unraid");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -558,95 +561,6 @@ async function readStatusTarget(target) {
       message: error.message || "Nicht erreichbar"
     };
   }
-}
-
-async function readHomeAssistantStatus(target, base) {
-  const headers = { Authorization: `Bearer ${target.apiKey}` };
-  const apiBase = new URL(target.statusPath || "/api/", target.url).href;
-  const info = await requestJson(apiBase, { headers });
-  const config = await requestJson(new URL("/api/config", target.url).href, { headers }).catch(() => ({}));
-  const states = await requestJson(new URL("/api/states", target.url).href, { headers }).catch(() => []);
-  const entities = Array.isArray(states) ? states : [];
-  const sensors = buildHomeAssistantSensors(target, entities);
-  const metrics = [
-    { label: "Sensoren", value: String(sensors.length) }
-  ];
-  if (config.version) metrics.push({ label: "Version", value: String(config.version).slice(0, 24) });
-
-  return {
-    ...base,
-    ok: true,
-    status: "online",
-    message: config.location_name || info.message || "Home Assistant erreichbar",
-    sensors,
-    details: sensors.map((sensor) => ({
-      label: sensor.label,
-      value: sensor.value,
-      online: sensor.online
-    })),
-    metrics
-  };
-}
-
-function buildHomeAssistantSensors(target, states) {
-  const stateMap = new Map(states.map((entity) => [entity.entity_id, entity]));
-  return normalizeHomeAssistantEntities(target.entities).map((sensorSpec) => {
-    const entity = stateMap.get(sensorSpec.entityId) || {};
-    const state = String(entity.state || "unknown");
-    const unit = String(entity.attributes?.unit_of_measurement || "").trim();
-    return {
-      entityId: sensorSpec.entityId,
-      label: sensorSpec.label || entity.attributes?.friendly_name || sensorSpec.entityId.replace(/^[^.]+\./, "").replace(/_/g, " "),
-      state,
-      unit,
-      value: unit ? `${state} ${unit}` : state,
-      online: !["unavailable", "unknown"].includes(state)
-    };
-  });
-}
-
-async function readUnraidStatus(target, base) {
-  const response = await requestJsonPost(new URL(target.statusPath || "/graphql", target.url).href, {
-    headers: { "x-api-key": target.apiKey },
-    body: {
-      query: `query HomedashStatus {
-        info {
-          os { distro release uptime }
-          cpu { cores threads }
-        }
-        array {
-          state
-          capacity { disks { used total free } }
-        }
-        dockerContainers {
-          id
-          state
-        }
-      }`
-    }
-  });
-
-  if (response.errors?.length) throw new Error(response.errors[0].message || "Unraid API Fehler");
-  const data = response.data || {};
-  const containers = Array.isArray(data.dockerContainers) ? data.dockerContainers : [];
-  const runningContainers = containers.filter((container) => String(container.state).toLowerCase() === "running").length;
-  const diskCapacity = data.array?.capacity?.disks || {};
-  const used = Number(diskCapacity.used || 0);
-  const total = Number(diskCapacity.total || 0);
-  const metrics = [
-    { label: "Array", value: String(data.array?.state || "unknown") },
-    { label: "Docker", value: `${runningContainers}/${containers.length}` }
-  ];
-  if (total > 0) metrics.push({ label: "Speicher", value: `${Math.round((used / total) * 100)}%` });
-  if (data.info?.cpu?.cores) metrics.push({ label: "CPU", value: `${data.info.cpu.cores} Cores` });
-
-  return {
-    ...base,
-    ok: true,
-    status: "online",
-    message: data.info?.os?.release ? `Unraid ${data.info.os.release}` : "API erreichbar",
-    metrics
-  };
 }
 
 async function readAmpStatus(target, base) {
@@ -1187,29 +1101,6 @@ function formatAmpMetric(value, fallbackUnit = "") {
   if (!Number.isFinite(number)) return String(value).slice(0, 24);
   const rounded = Math.round(number * 10) / 10;
   return `${rounded}${fallbackUnit}`;
-}
-
-async function readGenericServiceStatus(target, base) {
-  const statusUrl = target.statusPath ? new URL(target.statusPath, target.url).href : target.url;
-  const headers = target.headerName && target.headerValue ? { [target.headerName]: target.headerValue } : {};
-  const result = await requestHead(statusUrl, headers).catch(async () => {
-    const json = await requestJson(statusUrl, { headers });
-    return { ok: true, status: 200, statusText: "OK", json };
-  });
-
-  const metrics = [];
-  if (result.json && typeof result.json === "object") {
-    const value = result.json.status || result.json.state || result.json.version || result.json.name;
-    if (value) metrics.push({ label: "API", value: String(value).slice(0, 40) });
-  }
-
-  return {
-    ...base,
-    ok: result.ok,
-    status: result.ok ? "online" : "warning",
-    message: result.ok ? "Erreichbar" : `HTTP ${result.status || 0}`,
-    metrics
-  };
 }
 
 async function readWeather() {
