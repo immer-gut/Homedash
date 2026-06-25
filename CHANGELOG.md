@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.18.0 - 2026-06-25
+
+- Kategorien-Logik in `public/categories.js` ausgelagert.
+- Kategorienamen, Metadaten, Farbnormierung, Kategorie-Erstellung und Kategorien-Dialog sind jetzt an einer Stelle gebuendelt.
+- `public/app.js` laeuft jetzt als Browser-Modul und importiert die Kategorien-Funktionen.
+- Keine geplante Aenderung an UI, Status-Integrationen oder gespeicherten Daten.
+- Standard-Image-Tag auf `v1.18.0` angehoben.
+
 ## v1.17.0 - 2026-06-25
 
 - Status-Provider-Registry in `server/status/index.js` eingefuehrt.

@@ -1,3 +1,13 @@
+import {
+  categoryColors,
+  createCategoryDialogController,
+  getCategoryMeta as getCategoryMetaForState,
+  getCategoryNames as getCategoryNamesForState,
+  isCategoryVisible as isCategoryVisibleForState,
+  normalizeColor,
+  upsertCategory
+} from "./categories.js";
+
 const state = {
   setupComplete: true,
   title: "Homedash",
@@ -155,13 +165,10 @@ const elements = {
   toast: document.querySelector("#toast")
 };
 
-let categoryDrafts = [];
 let linkMetadataTimer = null;
 let linkMetadataAbort = null;
 let compactLayoutTimer = null;
 let dateCountdownDrafts = [];
-
-const categoryColors = ["#35f0ff", "#56ff8f", "#ffb238", "#ff4f7a", "#c471ff", "#4aa8ff", "#ff6f3c"];
 
 const widgetRegistry = [
   { id: "weather", render: renderWeather, isHidden: () => elements.weatherWidget.hidden },
@@ -838,40 +845,15 @@ function compareNames(a, b) {
 }
 
 function getCategoryNames() {
-  const seen = new Set();
-  const names = [];
-  for (const category of state.categories || []) {
-    const name = String(category.name || "").trim();
-    if (name && !seen.has(name)) {
-      names.push(name);
-      seen.add(name);
-    }
-  }
-  for (const link of state.links) {
-    if (link.category && !seen.has(link.category)) {
-      names.push(link.category);
-      seen.add(link.category);
-    }
-  }
-  return names.sort(compareNames);
+  return getCategoryNamesForState(state);
 }
 
 function getCategoryMeta(name) {
-  const category = (state.categories || []).find((candidate) => candidate.name === name) || {};
-  return {
-    icon: category.icon || "link",
-    color: normalizeColor(category.color || "#35f0ff"),
-    visible: category.visible !== false
-  };
+  return getCategoryMetaForState(state, name);
 }
 
 function isCategoryVisible(name) {
-  return getCategoryMeta(name).visible !== false;
-}
-
-function normalizeColor(color) {
-  const value = String(color || "").trim();
-  return /^#[0-9a-f]{6}$/i.test(value) ? value : "#35f0ff";
+  return isCategoryVisibleForState(state, name);
 }
 
 function createLinkCard(link) {
@@ -1291,134 +1273,29 @@ function openNoteComposer() {
   window.requestAnimationFrame(() => elements.noteInput.focus());
 }
 
-function openCategoriesDialog() {
-  if (!canEdit()) return openAdminDialog();
-  categoryDrafts = getCategoryNames().map((name) => {
-    const category = state.categories.find((candidate) => candidate.name === name);
-    return {
-      id: category?.id || createId(),
-      originalName: name,
-      name,
-      icon: category?.icon || "link",
-      color: normalizeColor(category?.color || "#35f0ff"),
-      visible: category?.visible !== false
-    };
-  });
-  renderCategoryEditor();
-  elements.categoriesDialog.showModal();
+function upsertCategoryFromLink(name) {
+  return upsertCategory(state, name, createId);
 }
 
-function renderCategoryEditor(focusId = "") {
-  elements.categoryEditor.replaceChildren(
-    ...categoryDrafts.sort((a, b) => compareNames(a.name, b.name)).map((category) => {
-      const row = document.createElement("div");
-      row.className = "category-row";
-      const input = document.createElement("input");
-      input.value = category.name;
-      input.maxLength = 40;
-      input.placeholder = "Neue Kategorie";
-      input.ariaLabel = "Kategoriename";
-      input.addEventListener("input", (event) => {
-        category.name = event.target.value;
-      });
-      input.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          saveCategories().catch((error) => showToast(error.message));
-        }
-      });
-      const color = document.createElement("input");
-      color.type = "color";
-      color.value = normalizeColor(category.color || "#35f0ff");
-      color.ariaLabel = "Kategorie-Farbe";
-      color.addEventListener("input", (event) => {
-        category.color = event.target.value;
-      });
-      const visibleLabel = document.createElement("label");
-      visibleLabel.className = "category-visible";
-      const visible = document.createElement("input");
-      visible.type = "checkbox";
-      visible.checked = category.visible !== false;
-      visible.addEventListener("change", (event) => {
-        category.visible = event.target.checked;
-      });
-      const visibleText = document.createElement("span");
-      visibleText.textContent = "Anzeigen";
-      visibleLabel.append(visible, visibleText);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "danger subtle-danger";
-      remove.textContent = "Löschen";
-      remove.addEventListener("click", () => {
-        categoryDrafts = categoryDrafts.filter((candidate) => candidate.id !== category.id);
-        renderCategoryEditor();
-      });
-      row.append(input, color, visibleLabel, remove);
-      if (category.id === focusId) {
-        window.requestAnimationFrame(() => {
-          input.focus();
-          input.select();
-        });
-      }
-      return row;
-    })
-  );
+const categoryDialog = createCategoryDialogController({
+  elements,
+  state,
+  createId,
+  saveData,
+  showToast
+});
+
+function openCategoriesDialog() {
+  if (!canEdit()) return openAdminDialog();
+  categoryDialog.open();
 }
 
 function addCategory() {
-  const id = createId();
-  categoryDrafts.push({ id, originalName: "", name: "", icon: "link", color: categoryColors[categoryDrafts.length % categoryColors.length], visible: true });
-  renderCategoryEditor(id);
+  categoryDialog.add();
 }
 
-async function saveCategories() {
-  const seen = new Set();
-  const nextCategories = categoryDrafts
-    .map((category) => ({
-      id: category.id || createId(),
-      originalName: category.originalName,
-      name: category.name.trim(),
-      icon: category.icon || "link",
-      color: normalizeColor(category.color),
-      visible: category.visible !== false
-    }))
-    .filter((category) => {
-      if (!category.name || seen.has(category.name)) return false;
-      seen.add(category.name);
-      return true;
-    });
-  const renames = new Map();
-  for (const category of nextCategories) {
-    if (category.originalName && category.originalName !== category.name) renames.set(category.originalName, category.name);
-  }
-  const nextNames = new Set(nextCategories.map((category) => category.name));
-  state.links = state.links.map((link) => {
-    if (renames.has(link.category)) return { ...link, category: renames.get(link.category) };
-    if (!nextNames.has(link.category)) return { ...link, category: "Links" };
-    return link;
-  });
-  if (state.links.some((link) => link.category === "Links") && !nextNames.has("Links")) {
-    nextCategories.push({ id: createId(), name: "Links", icon: "link", color: "#35f0ff", visible: true });
-  }
-  state.categories = nextCategories.map(({ id, name, icon, color, visible }) => ({ id, name, icon, color, visible })).sort((a, b) => compareNames(a.name, b.name));
-  await saveData("Kategorien gespeichert");
-  elements.categoriesDialog.close();
-}
-
-function upsertCategoryFromLink(name) {
-  const categoryName = String(name || "").trim();
-  if (!categoryName) return "Links";
-  const existing = (state.categories || []).find((category) => category.name.toLowerCase() === categoryName.toLowerCase());
-  if (existing) return existing.name;
-  state.categories.push({
-    id: createId(),
-    name: categoryName,
-    icon: "link",
-    color: categoryColors[state.categories.length % categoryColors.length],
-    visible: true
-  });
-  state.categories.sort((a, b) => compareNames(a.name, b.name));
-  return categoryName;
+function saveCategories() {
+  return categoryDialog.save();
 }
 
 function selectedLinkCategory() {
