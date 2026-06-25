@@ -1,6 +1,6 @@
 services:
   homedash:
-    image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:v1.13.0}
+    image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:v1.14.0}
     restart: unless-stopped
     ports:
       - "${HOMEDASH_PORT:-3002}:${HOMEDASH_INTERNAL_PORT:-3000}"

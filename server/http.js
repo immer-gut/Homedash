@@ -143,9 +143,67 @@ function requestHead(targetUrl, headers = {}) {
   });
 }
 
+function requestText(targetUrl, { accept, limit, headers = {} }) {
+  return new Promise((resolve, reject) => {
+    const parsed = parseHttpUrl(targetUrl);
+    if (!parsed) {
+      reject(new Error("Invalid URL"));
+      return;
+    }
+
+    const transport = parsed.protocol === "https:" ? https : http;
+    const request = transport.request(
+      parsed,
+      {
+        headers: { Accept: accept, "User-Agent": "Homedash/1.0", ...headers },
+        rejectUnauthorized: false,
+        timeout: 5000
+      },
+      (response) => {
+        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+          response.resume();
+          requestText(new URL(response.headers.location, parsed.href).href, { accept, headers, limit }).then(resolve, reject);
+          return;
+        }
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          response.resume();
+          reject(new Error(`HTTP ${response.statusCode}`));
+          return;
+        }
+
+        const chunks = [];
+        let size = 0;
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          resolve(Buffer.concat(chunks).toString("utf8"));
+        };
+        response.on("data", (chunk) => {
+          size += chunk.length;
+          chunks.push(chunk);
+          const text = Buffer.concat(chunks).toString("utf8");
+          if (size >= limit || /<\/head>/i.test(text) || /<\/title>/i.test(text)) {
+            response.destroy();
+            finish();
+          }
+        });
+        response.on("end", finish);
+      }
+    );
+    request.on("timeout", () => request.destroy(new Error("Request timeout")));
+    request.on("error", (error) => {
+      if (error.code === "ECONNRESET") return;
+      reject(error);
+    });
+    request.end();
+  });
+}
+
 module.exports = {
   requestBuffer,
   requestHead,
   requestJson,
-  requestJsonPost
+  requestJsonPost,
+  requestText
 };

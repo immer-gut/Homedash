@@ -1,5 +1,4 @@
 const http = require("http");
-const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -12,14 +11,13 @@ const {
   normalizeProfile,
   normalizeStatusWidget,
   normalizeUrl,
-  normalizeWeatherWidget,
   parseHttpUrl
 } = require("./server/normalize");
 const {
-  requestBuffer,
-  requestHead,
-  requestJson
+  requestHead
 } = require("./server/http");
+const { createLinkMetadataService } = require("./server/link-metadata");
+const { createWeatherService } = require("./server/weather");
 const { readProxmoxStatus } = require("./server/status/proxmox");
 const { readProxmoxBackupStatus } = require("./server/status/proxmox-backup");
 const { readHomeAssistantStatus } = require("./server/status/home-assistant");
@@ -39,6 +37,11 @@ const APP_VERSION = readAppVersion();
 const sessions = new Map();
 
 const defaultData = createDefaultData();
+const { readLinkMetadata, serveFavicon } = createLinkMetadataService({
+  faviconDir: FAVICON_DIR,
+  suggestCategoryForLink
+});
+const { readWeather } = createWeatherService({ readData });
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -255,163 +258,6 @@ function redactStatusSecrets(data) {
   };
 }
 
-function sendFaviconFallback(res) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#160b27"/><path d="M14 44h36M18 20h28M20 32h24" stroke="#26f4ff" stroke-width="5" stroke-linecap="round"/><path d="M14 44h36M18 20h28M20 32h24" stroke="#ff3df2" stroke-width="2" stroke-linecap="round"/></svg>`;
-  res.writeHead(200, {
-    "Content-Type": "image/svg+xml; charset=utf-8",
-    "Cache-Control": "public, max-age=86400"
-  });
-  res.end(svg);
-}
-
-async function serveFavicon(res, targetUrl) {
-  const parsed = parseHttpUrl(targetUrl);
-  if (!parsed) {
-    sendFaviconFallback(res);
-    return;
-  }
-
-  fs.mkdirSync(FAVICON_DIR, { recursive: true });
-  const cacheKey = crypto.createHash("sha256").update(parsed.origin).digest("hex");
-  const cacheFile = path.join(FAVICON_DIR, `${cacheKey}.bin`);
-  const metaFile = path.join(FAVICON_DIR, `${cacheKey}.json`);
-
-  if (fs.existsSync(cacheFile) && fs.existsSync(metaFile)) {
-    const meta = JSON.parse(fs.readFileSync(metaFile, "utf8"));
-    res.writeHead(200, {
-      "Content-Type": meta.contentType || "image/x-icon",
-      "Cache-Control": "public, max-age=604800"
-    });
-    fs.createReadStream(cacheFile).pipe(res);
-    return;
-  }
-
-  try {
-    const icon = await fetchBestFavicon(parsed);
-    fs.writeFileSync(cacheFile, icon.buffer);
-    fs.writeFileSync(metaFile, JSON.stringify({ contentType: icon.contentType }, null, 2));
-    res.writeHead(200, {
-      "Content-Type": icon.contentType,
-      "Cache-Control": "public, max-age=604800"
-    });
-    res.end(icon.buffer);
-  } catch {
-    sendFaviconFallback(res);
-  }
-}
-
-async function fetchBestFavicon(pageUrl) {
-  const html = await requestBuffer(pageUrl.href, { accept: "text/html,*/*", limit: 250_000 }).catch(() => null);
-  const candidates = [];
-
-  if (html?.buffer) {
-    const htmlText = html.buffer.toString("utf8");
-    candidates.push(...extractIconUrls(htmlText, pageUrl));
-  }
-
-  candidates.push(new URL("/favicon.ico", pageUrl.origin).href);
-  candidates.push(new URL("/apple-touch-icon.png", pageUrl.origin).href);
-
-  const uniqueCandidates = [...new Set(candidates)];
-  for (const candidate of uniqueCandidates) {
-    try {
-      const response = await requestBuffer(candidate, { accept: "image/*,*/*", limit: 500_000 });
-      if (response.buffer.length > 0 && response.contentType.startsWith("image/")) return response;
-    } catch {
-      // Try the next declared or conventional favicon location.
-    }
-  }
-
-  throw new Error("No favicon found");
-}
-
-async function readLinkMetadata(targetUrl) {
-  const parsed = parseHttpUrl(normalizeUrl(String(targetUrl || "")));
-  if (!parsed) return { ok: false, message: "Ungueltige URL" };
-
-  try {
-    const html = await requestText(parsed.href, { accept: "text/html,*/*", limit: 1_500_000 });
-    const title = extractPageTitle(html);
-    const category = suggestCategoryForLink({ title, url: parsed.href });
-    return {
-      ok: Boolean(title),
-      url: parsed.href,
-      title: title.slice(0, 80),
-      suggestedCategory: category,
-      message: title ? "" : "Seitentitel nicht gefunden"
-    };
-  } catch (error) {
-    return {
-      ok: false,
-      url: parsed.href,
-      title: "",
-      suggestedCategory: suggestCategoryForLink({ title: "", url: parsed.href }),
-      message: error.message
-    };
-  }
-}
-
-function extractPageTitle(html) {
-  const ogTitle = getMetaContent(html, "property", "og:title")
-    || getMetaContent(html, "name", "og:title")
-    || getMetaContent(html, "property", "twitter:title")
-    || getMetaContent(html, "name", "twitter:title");
-  const title = ogTitle || html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "";
-  return decodeHtmlText(title).replace(/\s+/g, " ").trim();
-}
-
-function getMetaContent(html, attrName, attrValue) {
-  const metaPattern = /<meta\b[^>]*>/gi;
-  for (const [tag] of html.matchAll(metaPattern)) {
-    const attrs = readHtmlAttrs(tag);
-    if (String(attrs[attrName] || "").toLowerCase() === attrValue.toLowerCase()) {
-      return attrs.content || "";
-    }
-  }
-  return "";
-}
-
-function extractIconUrls(html, pageUrl) {
-  const urls = [];
-  const linkPattern = /<link\b[^>]*>/gi;
-  for (const [tag] of html.matchAll(linkPattern)) {
-    const attrs = readHtmlAttrs(tag);
-    const rel = attrs.rel || "";
-    const href = attrs.href || "";
-    if (href && /\b(icon|apple-touch-icon)\b/i.test(rel)) {
-      urls.push(new URL(href, pageUrl.href).href);
-    }
-  }
-  return urls;
-}
-
-function readHtmlAttrs(tag) {
-  const attrs = {};
-  const attrPattern = /\s([a-zA-Z:-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/g;
-  for (const match of tag.matchAll(attrPattern)) {
-    attrs[match[1].toLowerCase()] = decodeHtmlText(match[3] || match[4] || match[5] || "");
-  }
-  return attrs;
-}
-
-function decodeHtmlText(value) {
-  return String(value || "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, "\"")
-    .replace(/&#39;/gi, "'")
-    .replace(/&apos;/gi, "'")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&#x([a-f0-9]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)));
-}
-
-function hostLabel(parsed) {
-  return parsed.hostname.replace(/^www\./i, "").split(".")[0] || "Link";
-}
-
 function suggestCategoryForLink({ title, url }) {
   const data = readData();
   const activeProfile = data.profiles.find((profile) => profile.id === data.activeProfileId) || data.profiles[0];
@@ -561,122 +407,6 @@ async function readStatusTarget(target) {
       message: error.message || "Nicht erreichbar"
     };
   }
-}
-
-async function readWeather() {
-  const data = readData();
-  const weather = normalizeWeatherWidget(data.widgets?.weather);
-  if (!weather.enabled) return { enabled: false };
-  if (!weather.latitude || !weather.longitude) {
-    return { enabled: true, ok: false, label: weather.label, message: "Koordinaten fehlen" };
-  }
-
-  const params = new URLSearchParams({
-    latitude: weather.latitude,
-    longitude: weather.longitude,
-    current: "temperature_2m,relative_humidity_2m,weather_code,precipitation",
-    daily: "temperature_2m_max,temperature_2m_min,precipitation_probability_max",
-    timezone: "auto",
-    forecast_days: "1"
-  });
-  const payload = await requestJson(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
-  const current = payload.current || {};
-  const daily = payload.daily || {};
-  const temperature = roundNumber(current.temperature_2m);
-  const code = Number(current.weather_code);
-
-  return {
-    enabled: true,
-    ok: true,
-    label: weather.label,
-    updatedAt: current.time || new Date().toISOString(),
-    temperature,
-    condition: weatherCodeText(code),
-    weatherCode: Number.isFinite(code) ? code : null,
-    precipitation: roundNumber(current.precipitation),
-    humidity: roundNumber(current.relative_humidity_2m),
-    rainChance: roundNumber(firstArrayValue(daily.precipitation_probability_max)),
-    high: roundNumber(firstArrayValue(daily.temperature_2m_max)),
-    low: roundNumber(firstArrayValue(daily.temperature_2m_min))
-  };
-}
-
-function firstArrayValue(value) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-function roundNumber(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? Math.round(number) : null;
-}
-
-function weatherCodeText(code) {
-  if ([0].includes(code)) return "Klar";
-  if ([1, 2].includes(code)) return "Teilweise wolkig";
-  if ([3].includes(code)) return "Bewölkt";
-  if ([45, 48].includes(code)) return "Nebel";
-  if ([51, 53, 55, 56, 57].includes(code)) return "Nieselregen";
-  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "Regen";
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return "Schnee";
-  if ([95, 96, 99].includes(code)) return "Gewitter";
-  return "Wetter";
-}
-
-function requestText(targetUrl, { accept, limit, headers = {} }) {
-  return new Promise((resolve, reject) => {
-    const parsed = parseHttpUrl(targetUrl);
-    if (!parsed) {
-      reject(new Error("Invalid URL"));
-      return;
-    }
-
-    const transport = parsed.protocol === "https:" ? https : http;
-    const request = transport.request(
-      parsed,
-      {
-        headers: { Accept: accept, "User-Agent": "Homedash/1.0", ...headers },
-        rejectUnauthorized: false,
-        timeout: 5000
-      },
-      (response) => {
-        if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-          response.resume();
-          requestText(new URL(response.headers.location, parsed.href).href, { accept, headers, limit }).then(resolve, reject);
-          return;
-        }
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          response.resume();
-          reject(new Error(`HTTP ${response.statusCode}`));
-          return;
-        }
-
-        const chunks = [];
-        let size = 0;
-        let settled = false;
-        const finish = () => {
-          if (settled) return;
-          settled = true;
-          resolve(Buffer.concat(chunks).toString("utf8"));
-        };
-        response.on("data", (chunk) => {
-          size += chunk.length;
-          chunks.push(chunk);
-          const text = Buffer.concat(chunks).toString("utf8");
-          if (size >= limit || /<\/head>/i.test(text) || /<\/title>/i.test(text)) {
-            response.destroy();
-            finish();
-          }
-        });
-        response.on("end", finish);
-      }
-    );
-    request.on("timeout", () => request.destroy(new Error("Request timeout")));
-    request.on("error", (error) => {
-      if (error.code === "ECONNRESET") return;
-      reject(error);
-    });
-    request.end();
-  });
 }
 
 function readRequestBody(req) {

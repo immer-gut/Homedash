@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.14.0 - 2026-06-25
+
+- Wetterlogik nach `server/weather.js` verschoben.
+- Link-Metadaten und Favicon-Erkennung nach `server/link-metadata.js` verschoben.
+- Text-Request-Helfer nach `server/http.js` verschoben.
+- `server.js` weiter auf Routing, Datenfluss, Admin/Auth und Kategorie-Vorschlaege reduziert.
+- Standard-Image-Tag auf `v1.14.0` angehoben.
+
 ## v1.13.0 - 2026-06-25
 
 - AMP-Statusintegration nach `server/status/amp.js` verschoben.
