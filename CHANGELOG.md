@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.8.1 - 2026-06-25
+
+- Datums-Widget auf mehrere Datums-Eintraege erweitert.
+- Datums-Eintraege werden jetzt oben links neben Wetter/Uhr angezeigt.
+- Bestehende einzelne Datums-Konfiguration wird automatisch uebernommen.
+- Standard-Image-Tag auf `v1.8.1` angehoben.
+
 ## v1.8.0 - 2026-06-25
 
 - Neues Datums-Widget ergaenzt.

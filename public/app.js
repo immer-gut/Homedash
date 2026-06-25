@@ -8,7 +8,7 @@ const state = {
   categories: [],
   links: [],
   statusTargets: [],
-  widgets: { clock: true, notes: [], statusOverview: false, linkStats: false, weather: { enabled: false, label: "Zuhause", latitude: "", longitude: "" }, dateCountdown: { enabled: false, label: "Datum", date: "" } },
+  widgets: { clock: true, notes: [], statusOverview: false, linkStats: false, weather: { enabled: false, label: "Zuhause", latitude: "", longitude: "" }, dateCountdown: { enabled: false, items: [] } },
   preferences: { startpageMode: true, shareMode: false, showCategoryCounts: false, compactCategoryLayout: false, showLinkStatus: true, showNotes: true, openLinksInNewTab: true },
   auth: { enabled: false, authenticated: true },
   status: { configured: 0, updatedAt: "", items: [] },
@@ -53,9 +53,7 @@ const elements = {
   refreshStatusButton: document.querySelector("#refreshStatusButton"),
   statsWidget: document.querySelector("#statsWidget"),
   statsList: document.querySelector("#statsList"),
-  dateWidget: document.querySelector("#dateWidget"),
-  dateWidgetLabel: document.querySelector("#dateWidgetLabel"),
-  dateWidgetBody: document.querySelector("#dateWidgetBody"),
+  dateCountdownList: document.querySelector("#dateCountdownList"),
   notesWidget: document.querySelector("#notesWidget"),
   notesList: document.querySelector("#notesList"),
   noteInput: document.querySelector("#noteInput"),
@@ -123,8 +121,8 @@ const elements = {
   settingShowWeatherWidget: document.querySelector("#settingShowWeatherWidget"),
   settingShowDateWidget: document.querySelector("#settingShowDateWidget"),
   dateSettings: document.querySelector("#dateSettings"),
-  settingDateLabel: document.querySelector("#settingDateLabel"),
-  settingDateValue: document.querySelector("#settingDateValue"),
+  dateCountdownEditor: document.querySelector("#dateCountdownEditor"),
+  addDateCountdownButton: document.querySelector("#addDateCountdownButton"),
   weatherSettings: document.querySelector("#weatherSettings"),
   settingWeatherLabel: document.querySelector("#settingWeatherLabel"),
   settingWeatherLatitude: document.querySelector("#settingWeatherLatitude"),
@@ -160,6 +158,7 @@ let categoryDrafts = [];
 let linkMetadataTimer = null;
 let linkMetadataAbort = null;
 let compactLayoutTimer = null;
+let dateCountdownDrafts = [];
 
 const categoryIcons = [
   ["folder", "Ordner"],
@@ -345,21 +344,33 @@ function renderWidgets() {
   renderWeather();
   renderStatus();
   renderStatsWidget();
-  renderDateWidget();
+  renderDateCountdowns();
   const notesHidden = state.preferences?.showNotes === false || (!notes.length && !state.noteComposerOpen);
   elements.notesWidget.hidden = notesHidden;
-  elements.widgets.hidden = notesHidden && elements.statusWidget.hidden && elements.statsWidget.hidden && elements.dateWidget.hidden;
+  elements.widgets.hidden = notesHidden && elements.statusWidget.hidden && elements.statsWidget.hidden;
   elements.noteInput.disabled = !canEdit();
   elements.addNoteButton.disabled = !canEdit();
   elements.notesList.replaceChildren(...notes.map(createNoteCard));
 }
 
-function renderDateWidget() {
+function renderDateCountdowns() {
   const config = state.widgets?.dateCountdown || {};
-  elements.dateWidget.hidden = config.enabled !== true;
-  if (elements.dateWidget.hidden) return;
-  elements.dateWidgetLabel.textContent = config.label || "Datum";
-  const result = calculateDateCountdown(config.date);
+  const items = getDateCountdownItems(config);
+  elements.dateCountdownList.hidden = config.enabled !== true || !items.length;
+  if (elements.dateCountdownList.hidden) {
+    elements.dateCountdownList.replaceChildren();
+    return;
+  }
+  elements.dateCountdownList.replaceChildren(...items.map(createDateCountdownCard));
+}
+
+function createDateCountdownCard(item) {
+  const result = calculateDateCountdown(item.date);
+  const card = document.createElement("article");
+  card.className = "date-countdown-card";
+  const label = document.createElement("span");
+  label.className = "date-countdown-label";
+  label.textContent = item.label || "Datum";
   const value = document.createElement("strong");
   value.className = "date-countdown-value";
   value.textContent = result.value;
@@ -368,7 +379,8 @@ function renderDateWidget() {
   text.textContent = result.text;
   const date = document.createElement("small");
   date.textContent = result.dateLabel;
-  elements.dateWidgetBody.replaceChildren(value, text, date);
+  card.append(label, value, text, date);
+  return card;
 }
 
 function renderWeather() {
@@ -444,6 +456,24 @@ function calculateDateCountdown(value) {
     value: String(absoluteDays),
     text: days > 0 ? `Tag${absoluteDays === 1 ? "" : "e"} bis dahin` : `Tag${absoluteDays === 1 ? "" : "e"} seitdem`,
     dateLabel
+  };
+}
+
+function getDateCountdownItems(config = state.widgets?.dateCountdown || {}) {
+  const items = Array.isArray(config.items) ? config.items : [];
+  const normalized = items
+    .map(normalizeDateCountdownItem)
+    .filter((item) => item.label || item.date);
+  if (normalized.length) return normalized;
+  const legacy = normalizeDateCountdownItem(config);
+  return legacy.label || legacy.date ? [legacy] : [];
+}
+
+function normalizeDateCountdownItem(item = {}) {
+  return {
+    id: item.id || createId(),
+    label: String(item.label || "").trim().slice(0, 40),
+    date: String(item.date || "").trim()
   };
 }
 
@@ -1147,8 +1177,8 @@ function openSettingsDialog() {
   elements.settingShowStatusWidget.checked = state.widgets?.statusOverview === true;
   elements.settingShowWeatherWidget.checked = state.widgets?.weather?.enabled === true;
   elements.settingShowDateWidget.checked = state.widgets?.dateCountdown?.enabled === true;
-  elements.settingDateLabel.value = state.widgets?.dateCountdown?.label || "Datum";
-  elements.settingDateValue.value = state.widgets?.dateCountdown?.date || "";
+  dateCountdownDrafts = getDateCountdownItems(state.widgets?.dateCountdown);
+  if (!dateCountdownDrafts.length) dateCountdownDrafts = [{ id: createId(), label: "Datum", date: "" }];
   elements.settingWeatherLabel.value = state.widgets?.weather?.label || "Zuhause";
   elements.settingWeatherLatitude.value = state.widgets?.weather?.latitude || "";
   elements.settingWeatherLongitude.value = state.widgets?.weather?.longitude || "";
@@ -1163,6 +1193,42 @@ function renderWeatherSettings() {
 
 function renderDateSettings() {
   elements.dateSettings.hidden = !elements.settingShowDateWidget.checked;
+  renderDateCountdownEditor();
+}
+
+function renderDateCountdownEditor() {
+  elements.dateCountdownEditor.replaceChildren(...dateCountdownDrafts.map((item) => {
+    const row = document.createElement("div");
+    row.className = "date-countdown-row";
+    const label = document.createElement("input");
+    label.value = item.label || "";
+    label.maxLength = 40;
+    label.placeholder = "Urlaub, Wartung, Geburtstag";
+    label.ariaLabel = "Titel";
+    label.addEventListener("input", (event) => {
+      item.label = event.target.value;
+    });
+    const date = document.createElement("input");
+    date.type = "date";
+    date.value = item.date || "";
+    date.ariaLabel = "Datum";
+    date.addEventListener("input", (event) => {
+      item.date = event.target.value;
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "icon-button";
+    remove.textContent = "x";
+    remove.ariaLabel = "Datum entfernen";
+    remove.disabled = dateCountdownDrafts.length <= 1;
+    remove.addEventListener("click", () => {
+      dateCountdownDrafts = dateCountdownDrafts.filter((candidate) => candidate.id !== item.id);
+      if (!dateCountdownDrafts.length) dateCountdownDrafts = [{ id: createId(), label: "Datum", date: "" }];
+      renderDateCountdownEditor();
+    });
+    row.append(label, date, remove);
+    return row;
+  }));
 }
 
 function openNoteComposer() {
@@ -1446,8 +1512,9 @@ async function saveSettings() {
     dateCountdown: {
       ...(state.widgets?.dateCountdown || {}),
       enabled: elements.settingShowDateWidget.checked,
-      label: elements.settingDateLabel.value.trim() || "Datum",
-      date: elements.settingDateValue.value
+      items: dateCountdownDrafts
+        .map(normalizeDateCountdownItem)
+        .filter((item) => item.label || item.date)
     },
     weather: {
       ...(state.widgets?.weather || {}),
@@ -1868,6 +1935,10 @@ elements.settingsBookmarkImportButton.addEventListener("click", () => {
 elements.createDemoButton.addEventListener("click", () => createDemoProfile().catch((error) => showToast(error.message)));
 elements.settingShowWeatherWidget.addEventListener("change", renderWeatherSettings);
 elements.settingShowDateWidget.addEventListener("change", renderDateSettings);
+elements.addDateCountdownButton.addEventListener("click", () => {
+  dateCountdownDrafts.push({ id: createId(), label: "", date: "" });
+  renderDateCountdownEditor();
+});
 elements.settingsBackupButton.addEventListener("click", downloadBackup);
 elements.settingsRestoreButton.addEventListener("click", () => {
   elements.settingsDialog.close();

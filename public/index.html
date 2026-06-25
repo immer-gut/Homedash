@@ -16,6 +16,7 @@
           <p class="app-version" id="appVersion">v--</p>
         </div>
         <div class="topbar-cards">
+          <div class="date-countdown-list" id="dateCountdownList" hidden></div>
           <article class="weather-widget" id="weatherWidget" hidden>
             <header class="weather-header">
               <span id="weatherLabel">Wetter</span>
@@ -62,12 +63,6 @@
             <p>Übersicht</p>
           </header>
           <div id="statsList" class="mini-stats"></div>
-        </article>
-        <article class="widget date-widget" id="dateWidget" hidden>
-          <header class="widget-header">
-            <p id="dateWidgetLabel">Datum</p>
-          </header>
-          <div id="dateWidgetBody" class="date-countdown"></div>
         </article>
         <article class="widget notes-widget" id="notesWidget" data-widget="notes">
           <header class="widget-header">
@@ -307,14 +302,8 @@
             <span>Datums-Widget anzeigen</span>
           </label>
           <div class="date-settings" id="dateSettings">
-            <label>
-              Titel
-              <input id="settingDateLabel" maxlength="40" placeholder="Urlaub" />
-            </label>
-            <label>
-              Datum
-              <input id="settingDateValue" type="date" />
-            </label>
+            <div id="dateCountdownEditor" class="date-countdown-editor"></div>
+            <button id="addDateCountdownButton" class="subtle-button" type="button">+ Datum</button>
           </div>
           <div class="weather-settings" id="weatherSettings">
             <label>

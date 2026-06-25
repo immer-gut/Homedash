@@ -573,43 +573,67 @@ textarea:focus {
   min-height: 0;
 }
 
-.date-widget {
-  min-height: 0;
-}
-
 .status-widget {
   min-height: 0;
 }
 
-.date-countdown {
+.date-countdown-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+  max-width: min(620px, 46vw);
+}
+
+.date-countdown-card {
   display: grid;
-  gap: 4px;
+  grid-template-columns: auto auto;
+  gap: 2px 8px;
   align-content: center;
-  min-height: 92px;
+  min-width: 132px;
+  min-height: 60px;
   border: 1px solid color-mix(in srgb, var(--accent), transparent 62%);
   border-radius: 8px;
-  padding: 12px;
+  padding: 8px 10px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--accent), transparent 88%), transparent),
-    rgba(0, 0, 0, 0.12);
+    var(--panel);
+  box-shadow:
+    var(--shadow),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.035);
+}
+
+.date-countdown-label {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .date-countdown-value {
   color: var(--text);
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 850;
   line-height: 1;
 }
 
 .date-countdown-text {
+  align-self: center;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.72rem;
   font-weight: 750;
+  line-height: 1.1;
 }
 
-.date-countdown small {
+.date-countdown-card small {
+  grid-column: 1 / -1;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   font-weight: 750;
 }
 
@@ -1778,7 +1802,23 @@ dialog::backdrop {
 }
 
 .date-settings {
-  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.7fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.date-countdown-editor {
+  display: grid;
+  gap: 7px;
+}
+
+.date-countdown-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(145px, 0.8fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.date-countdown-row .icon-button {
+  width: 38px;
 }
 
 .subtle-button {
@@ -1990,6 +2030,11 @@ dialog::backdrop {
     align-items: end;
   }
 
+  .date-countdown-list {
+    justify-content: end;
+    max-width: min(100%, 300px);
+  }
+
   .weather-widget {
     width: 132px;
   }
@@ -2055,6 +2100,10 @@ dialog::backdrop {
   }
 
   .category-row {
+    grid-template-columns: 1fr;
+  }
+
+  .date-countdown-row {
     grid-template-columns: 1fr;
   }
 

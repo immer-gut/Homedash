@@ -45,8 +45,7 @@ const defaultData = {
     },
     dateCountdown: {
       enabled: false,
-      label: "Datum",
-      date: ""
+      items: []
     }
   },
   preferences: {
@@ -265,11 +264,24 @@ function normalizeWidgets(widgets) {
 }
 
 function normalizeDateCountdownWidget(widget) {
-  const rawDate = String(widget?.date || "").trim();
+  const items = Array.isArray(widget?.items)
+    ? widget.items
+    : widget?.date || widget?.label
+      ? [{ id: widget?.id, label: widget?.label, date: widget?.date }]
+      : [];
   return {
     enabled: widget?.enabled === true,
-    label: String(widget?.label || "Datum").trim().slice(0, 40) || "Datum",
-    date: /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : ""
+    items: items
+      .map((item) => {
+        const rawDate = String(item?.date || "").trim();
+        return {
+          id: String(item?.id || crypto.randomUUID()),
+          label: String(item?.label || "Datum").trim().slice(0, 40) || "Datum",
+          date: /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : ""
+        };
+      })
+      .filter((item) => item.date)
+      .slice(0, 12)
   };
 }
 
