@@ -216,6 +216,7 @@ function normalizeStatusWidget(widget, fallbackUrl = "") {
       ? String(widget.type).toLowerCase()
       : "basic",
     url: normalizeUrl(String(widget?.url || fallbackUrl || "")),
+    openUrl: normalizeUrl(String(widget?.openUrl || "")),
     statusPath: String(widget?.statusPath || "").slice(0, 160),
     tokenId: String(widget?.tokenId || "").slice(0, 160),
     tokenSecret: String(widget?.tokenSecret || "").slice(0, 260),

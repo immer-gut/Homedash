@@ -140,6 +140,7 @@ function parseStatusTargets(raw) {
         name: String(target.name || target.type || "Status").slice(0, 80),
         type: String(target.type || "basic").toLowerCase(),
         url: normalizeUrl(String(target.url || "")),
+        openUrl: normalizeUrl(String(target.openUrl || "")),
         statusPath: String(target.statusPath || ""),
         apiKey: String(target.apiKey || ""),
         username: String(target.username || ""),
@@ -170,13 +171,13 @@ function publicStatusTarget(target) {
 }
 
 function createOpenUrl(target) {
-  const parsed = parseHttpUrl(target.url);
+  const parsed = parseHttpUrl(target.openUrl || target.url);
   if (!parsed) return "";
   parsed.username = "";
   parsed.password = "";
   parsed.search = "";
   parsed.hash = "";
-  if (["homeassistant", "proxmox", "proxmoxbackup", "unraid", "amp"].includes(target.type) || /^\/(api|api2|graphql)(\/|$)/i.test(parsed.pathname)) {
+  if (!target.openUrl && (["homeassistant", "proxmox", "proxmoxbackup", "unraid", "amp"].includes(target.type) || /^\/(api|api2|graphql)(\/|$)/i.test(parsed.pathname))) {
     parsed.pathname = "/";
   }
   return parsed.href;

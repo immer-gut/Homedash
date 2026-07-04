@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.20.0 - 2026-07-04
+
+- Status-Widgets haben jetzt eine optionale `Oeffnen-URL` getrennt von der Status/API-URL.
+- `Oeffnen` nutzt zuerst die konfigurierte `openUrl` und entfernt weiterhin Query-Parameter, Hash und Login-Daten.
+- `HOMEDASH_STATUS_TARGETS` unterstuetzt ebenfalls `openUrl`.
+- Dokumentation fuer getrennte Status-URL und Oeffnen-URL ergaenzt.
+- Standard-Image-Tag auf `v1.20.0` angehoben.
+
 ## v1.19.1 - 2026-07-04
 
 - `Oeffnen`-Links in Status-Widgets nutzen jetzt eine bereinigte `openUrl` ohne Token, Query-Parameter, Hash oder Login-Daten.

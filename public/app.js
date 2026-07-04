@@ -99,6 +99,7 @@ const elements = {
   linkStatusFields: document.querySelector("#linkStatusFields"),
   linkStatusType: document.querySelector("#linkStatusType"),
   linkStatusUrl: document.querySelector("#linkStatusUrl"),
+  linkStatusOpenUrl: document.querySelector("#linkStatusOpenUrl"),
   linkStatusTokenId: document.querySelector("#linkStatusTokenId"),
   linkStatusTokenSecret: document.querySelector("#linkStatusTokenSecret"),
   linkStatusApiKey: document.querySelector("#linkStatusApiKey"),
@@ -828,6 +829,7 @@ function setStatusWidgetForm(widget = {}) {
   elements.linkStatusEnabled.checked = widget?.enabled !== false;
   elements.linkStatusType.value = widget?.type || "basic";
   elements.linkStatusUrl.value = widget?.url || "";
+  elements.linkStatusOpenUrl.value = widget?.openUrl || "";
   elements.linkStatusTokenId.value = widget?.tokenId || "";
   elements.linkStatusTokenSecret.value = widget?.tokenSecret || "";
   elements.linkStatusApiKey.value = widget?.apiKey || "";
@@ -876,6 +878,7 @@ function collectStatusWidgetForm() {
     enabled: elements.linkStatusEnabled.checked,
     type: elements.linkStatusType.value,
     url: normalizeUrl(elements.linkStatusUrl.value),
+    openUrl: normalizeUrl(elements.linkStatusOpenUrl.value),
     tokenId: elements.linkStatusTokenId.value.trim(),
     tokenSecret: elements.linkStatusTokenSecret.value.trim(),
     apiKey: elements.linkStatusApiKey.value.trim(),
