@@ -35,10 +35,11 @@ export function createStatusUiController({
     const actions = document.createElement("div");
     actions.className = "service-actions";
     actions.append(badge);
-    if (item.url) {
+    const openUrl = item.openUrl || item.url;
+    if (openUrl) {
       const open = document.createElement("a");
       open.className = "button subtle-button service-link";
-      open.href = item.url;
+      open.href = openUrl;
       open.target = "_blank";
       open.rel = "noopener noreferrer";
       open.textContent = "Öffnen";

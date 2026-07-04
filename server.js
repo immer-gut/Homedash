@@ -164,8 +164,22 @@ function publicStatusTarget(target) {
     name: target.name,
     type: target.type,
     url: target.url,
+    openUrl: createOpenUrl(target),
     enabled: target.enabled !== false
   };
+}
+
+function createOpenUrl(target) {
+  const parsed = parseHttpUrl(target.url);
+  if (!parsed) return "";
+  parsed.username = "";
+  parsed.password = "";
+  parsed.search = "";
+  parsed.hash = "";
+  if (["homeassistant", "proxmox", "proxmoxbackup", "unraid", "amp"].includes(target.type) || /^\/(api|api2|graphql)(\/|$)/i.test(parsed.pathname)) {
+    parsed.pathname = "/";
+  }
+  return parsed.href;
 }
 
 function getConfiguredStatusTargets(data) {

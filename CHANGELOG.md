@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.19.1 - 2026-07-04
+
+- `Oeffnen`-Links in Status-Widgets nutzen jetzt eine bereinigte `openUrl` ohne Token, Query-Parameter, Hash oder Login-Daten.
+- Home Assistant, Proxmox, PBS, Unraid und AMP oeffnen die Root-Weboberflaeche statt API-/Token-URLs.
+- Einfache HTTP-Statusziele behalten ihren Pfad, entfernen aber Query/Hash/Login-Daten.
+- Standard-Image-Tag auf `v1.19.1` angehoben.
+
 ## v1.19.0 - 2026-06-25
 
 - Status-UI in `public/status-ui.js` ausgelagert.
