@@ -27,8 +27,7 @@ const state = {
   app: { name: "Homedash", version: "" },
   statusLoading: false,
   weatherLoading: false,
-  query: "",
-  searchOpen: false
+  query: ""
 };
 
 const elements = {
@@ -42,8 +41,6 @@ const elements = {
   locked: document.querySelector("#lockedState"),
   search: document.querySelector("#searchInput"),
   searchPanel: document.querySelector("#searchPanel"),
-  searchToggleButton: document.querySelector("#searchToggleButton"),
-  googleSearchButton: document.querySelector("#googleSearchButton"),
   addButton: document.querySelector("#addButton"),
   addWidgetButton: document.querySelector("#addWidgetButton"),
   newNoteButton: document.querySelector("#newNoteButton"),
@@ -580,10 +577,7 @@ function renderStatsWidget() {
 }
 
 function renderSearch() {
-  const open = state.searchOpen || Boolean(state.query);
-  elements.searchPanel.hidden = !open;
-  elements.searchToggleButton.setAttribute("aria-expanded", String(open));
-  elements.searchToggleButton.textContent = open ? "Suche ausblenden" : "Suche";
+  elements.searchPanel.hidden = false;
 }
 
 function getNotes() {
@@ -1483,39 +1477,20 @@ function getCommandResults(query) {
     .filter((note) => note.text.toLowerCase().includes(normalized))
     .slice(0, 3)
     .map((note) => ({ type: "note", title: note.text.slice(0, 70), meta: "Notiz" }));
-  const google = { type: "google", title: `Google: ${query}`, meta: "Websuche", url: googleSearchUrl(query) };
-  return [[...matches, ...categories, ...notes].slice(0, 9), google].flat();
+  return [...matches, ...categories, ...notes].slice(0, 9);
 }
 
 function activateCommandResult(result) {
-  if ((result.type === "link" || result.type === "google") && result.url) {
+  if (result.type === "link" && result.url) {
     const target = state.preferences?.openLinksInNewTab === false ? "_self" : "_blank";
     window.open(result.url, target, target === "_blank" ? "noopener,noreferrer" : undefined);
   } else {
     state.query = result.title;
     elements.search.value = result.title;
-    state.searchOpen = true;
     renderSearch();
     renderGroups();
   }
   elements.commandDialog.close();
-}
-
-function googleSearchUrl(query) {
-  return `https://www.google.com/search?q=${encodeURIComponent(query.trim())}`;
-}
-
-function openGoogleSearch(query) {
-  const search = query.trim();
-  if (!search) {
-    state.searchOpen = true;
-    renderSearch();
-    elements.search.focus();
-    showToast("Suchtext eingeben");
-    return;
-  }
-  const target = state.preferences?.openLinksInNewTab === false ? "_self" : "_blank";
-  window.open(googleSearchUrl(search), target, target === "_blank" ? "noopener,noreferrer" : undefined);
 }
 
 elements.search.addEventListener("input", (event) => {
@@ -1525,18 +1500,6 @@ elements.search.addEventListener("input", (event) => {
 elements.search.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
-  openGoogleSearch(elements.search.value);
-});
-elements.googleSearchButton.addEventListener("click", () => openGoogleSearch(elements.search.value));
-elements.searchToggleButton.addEventListener("click", () => {
-  state.searchOpen = !state.searchOpen;
-  if (!state.searchOpen) {
-    state.query = "";
-    elements.search.value = "";
-    renderGroups();
-  }
-  renderSearch();
-  if (state.searchOpen) elements.search.focus();
 });
 elements.addButton.addEventListener("click", () => openLinkDialog());
 elements.addWidgetButton.addEventListener("click", () => openStatusWidgetDialog());
@@ -1650,7 +1613,6 @@ document.addEventListener("keydown", (event) => {
   }
   if (event.key === "/" && !isTyping && !openDialog) {
     event.preventDefault();
-    state.searchOpen = true;
     renderSearch();
     elements.search.focus();
   }

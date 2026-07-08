@@ -2,13 +2,13 @@
 
 Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
-Aktuelle Version: `v1.20.0`
+Aktuelle Version: `v1.21.0`
 
 ## Funktionen
 
 - Browserbasierte Pflege von Links, Kategorien, Profilen, Notizen, Titel und Untertitel
 - Kategorie-Farben und Sichtbarkeit fuer bessere Gruppierung
-- Einklappbare Suche ueber Linktitel, Kategorie und Notiz, auch per `Cmd+K`/`Ctrl+K`
+- Dauerhaft sichtbare Suche ueber Linktitel, Kategorie und Notiz, auch per `Cmd+K`/`Ctrl+K`
 - Automatisch gruppierte Kategorien mit alphabetischer Sortierung
 - JSON-Backup/Restore in der UI
 - Import von Browser-Bookmarks als HTML-Datei
@@ -51,7 +51,7 @@ In Portainer kannst du Homedash als Git-Stack deployen.
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.20.0
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.21.0
 HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
@@ -64,14 +64,14 @@ Testhinweise fuer Portainer:
 - Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
-- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.20.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
+- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.21.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
   homedash:
-    image: ghcr.io/immer-gut/homedash:v1.20.0
+    image: ghcr.io/immer-gut/homedash:v1.21.0
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -103,7 +103,7 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.20.0` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.21.0` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
 | `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
@@ -121,7 +121,7 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.20.0
+ghcr.io/immer-gut/homedash:v1.21.0
 ```
 
 Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `vX.Y.Z`, zum Beispiel `v1.1.1`, erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
@@ -137,7 +137,7 @@ Homedash nutzt ab `v1.1.0` semantische Versionierung:
 Fuer Portainer wird ein gepinnter Image-Tag empfohlen:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.20.0
+ghcr.io/immer-gut/homedash:v1.21.0
 ```
 
 `latest` bleibt verfuegbar, ist aber beweglich. Praktisch fuer Tests, weniger praktisch, wenn man spaeter wissen will, was eigentlich laeuft. Verrueckte Idee, ich weiss.
@@ -337,7 +337,7 @@ Home Assistant:
 
 Homedash liest damit `/api/`, `/api/config` und `/api/states` und zeigt Version, Entities sowie deine konfigurierten Sensorwerte inklusive Einheit an. Genau, Temperatur darf jetzt Temperatur sein und muss nicht mehr als Lichtschalter verkleidet werden.
 
-Die Suche auf der Startseite kann ausserdem direkt Google oeffnen: Suchbegriff eingeben und `Enter` druecken. In der Befehlspalette (`Cmd/Ctrl + K`) erscheint bei Suchtext ebenfalls ein Google-Treffer.
+Die Suche auf der Startseite ist dauerhaft sichtbar und filtert Links, Kategorien und Notizen lokal. Externe Google-Suche ist nicht mehr eingebunden.
 
 Status-Zugangsdaten werden in `homedash.json` unter `statusTargets` gespeichert und sind damit auch im JSON-Export enthalten. Wenn du Secrets lieber ausschliesslich als Container-Environment halten willst, funktioniert `HOMEDASH_STATUS_TARGETS` weiterhin als Fallback:
 
@@ -360,7 +360,7 @@ docker compose up -d
 Portainer Update:
 
 1. Stack oeffnen.
-2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.20.0`.
+2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.21.0`.
 3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
 4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 

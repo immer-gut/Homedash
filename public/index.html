@@ -31,11 +31,9 @@
       </section>
 
       <section class="command-row" aria-label="Startseitenwerkzeuge">
-        <button id="searchToggleButton" type="button" aria-expanded="false">Suche</button>
-        <button id="googleSearchButton" type="button">Google</button>
-        <label class="search" id="searchPanel" hidden>
+        <label class="search" id="searchPanel">
           <span>Suchen</span>
-          <input id="searchInput" type="search" placeholder="Link, Kategorie oder Google-Suche" autocomplete="off" />
+          <input id="searchInput" type="search" placeholder="Link, Kategorie oder Notiz" autocomplete="off" />
         </label>
         <button class="primary admin-only" id="addButton" type="button">+ Link</button>
         <button class="admin-only" id="addWidgetButton" type="button">+ Widget</button>
@@ -445,6 +443,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/app.js?v=1.20.0"></script>
+    <script type="module" src="/app.js?v=1.21.0"></script>
   </body>
 </html>

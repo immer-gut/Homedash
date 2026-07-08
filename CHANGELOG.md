@@ -2,6 +2,13 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.21.0 - 2026-07-08
+
+- Google-Suche aus der Startseite entfernt.
+- Google-Treffer aus der Befehlspalette entfernt.
+- Suche ist jetzt standardmaessig dauerhaft sichtbar.
+- Standard-Image-Tag auf `v1.21.0` angehoben.
+
 ## v1.20.0 - 2026-07-04
 
 - Status-Widgets haben jetzt eine optionale `Oeffnen-URL` getrennt von der Status/API-URL.
