@@ -2,6 +2,12 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.21.1 - 2026-07-08
+
+- Button-Spalte in Statuskarten ausgerichtet.
+- Status-Badge, `Oeffnen` und `Bearbeiten` haben jetzt konsistente Breite und Abstand.
+- Standard-Image-Tag auf `v1.21.1` angehoben.
+
 ## v1.21.0 - 2026-07-08
 
 - Google-Suche aus der Startseite entfernt.

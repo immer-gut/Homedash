@@ -891,10 +891,10 @@ textarea:focus {
 }
 
 .service-head {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 12px;
   align-items: flex-start;
-  justify-content: space-between;
 }
 
 .service-head div,
@@ -906,10 +906,12 @@ textarea:focus {
 .service-actions {
   display: grid;
   gap: 6px;
+  min-width: 74px;
   justify-items: end;
 }
 
 .service-actions .subtle-button {
+  width: 74px;
   min-height: 28px;
   padding: 5px 8px;
   font-size: 0.74rem;
@@ -959,6 +961,11 @@ textarea:focus {
 }
 
 .service-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  min-height: 28px;
   border: 1px solid color-mix(in srgb, var(--service-glow, var(--accent)), transparent 42%);
   border-radius: 999px;
   padding: 3px 8px;
