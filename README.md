@@ -66,6 +66,14 @@ Testhinweise fuer Portainer:
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
 - Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.22.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
+Wenn Portainer beim Update nur `Request failed with status code 500` meldet, zuerst die Portainer-Logs pruefen. Bei GHCR-Fehlern wie `denied: denied` oder `Head "https://ghcr.io/v2/.../manifests/...": denied` liegt es meist nicht an der Compose-Datei, sondern an Registry-Zugriff:
+
+- GitHub/PAT fuer die Portainer-Registry kann abgelaufen sein.
+- Der Token braucht fuer private GHCR-Packages mindestens `read:packages`.
+- Die Portainer-Registry fuer `ghcr.io` muss den aktuellen Token nutzen.
+- Repository public bedeutet nicht automatisch, dass das GHCR-Package public ist.
+- Wenn das Image lokal schon vorhanden ist, kann ein Update ohne erneutes Pull kurzfristig funktionieren; fuer echte Updates muss der Registry-Zugriff stimmen.
+
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
@@ -409,6 +417,7 @@ Portainer Update:
 2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.22.0`.
 3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
 4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
+5. Falls Portainer dabei nur Fehler 500 zeigt, Portainer-Logs auf GHCR-`denied` pruefen und zuerst Registry-Token, `read:packages` und Package-Sichtbarkeit kontrollieren.
 
 Das Daten-Volume bleibt bei normalen Updates erhalten. Loesche das Volume nur, wenn du bewusst alle Homedash-Daten entfernen willst.
 
