@@ -18,6 +18,7 @@ const { createDataStore } = require("./server/data-store");
 const { createLinkMetadataService } = require("./server/link-metadata");
 const { createWeatherService } = require("./server/weather");
 const { readStatusWithProvider } = require("./server/status");
+const { createZoraInboxStore } = require("./server/zora-inbox");
 
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -25,6 +26,7 @@ const DATA_DIR = process.env.DATA_DIR || "/data";
 const FAVICON_DIR = path.join(DATA_DIR, "favicons");
 const PUBLIC_DIR = path.join(__dirname, "public");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const ZORA_INBOX_TOKEN = process.env.ZORA_INBOX_TOKEN || "";
 const STATUS_TARGETS = parseStatusTargets(process.env.HOMEDASH_STATUS_TARGETS || "[]");
 const APP_VERSION = readAppVersion();
 
@@ -48,6 +50,7 @@ const { readLinkMetadata, serveFavicon } = createLinkMetadataService({
   suggestCategoryForLink
 });
 const { readWeather } = createWeatherService({ readData });
+const zoraInbox = createZoraInboxStore({ dataDir: DATA_DIR });
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -246,6 +249,17 @@ function readRequestBody(req) {
   });
 }
 
+function requireZoraInboxAccess(req, res) {
+  if (ZORA_INBOX_TOKEN && readBearerToken(req) === ZORA_INBOX_TOKEN) return true;
+  return auth.requireAuth(req, res);
+}
+
+function readBearerToken(req) {
+  const authorization = String(req.headers.authorization || "");
+  const bearer = authorization.match(/^Bearer\s+(.+)$/i)?.[1] || "";
+  return bearer || String(req.headers["x-zora-token"] || "");
+}
+
 function serveStatic(req, res) {
   const requestPath = new URL(req.url, `http://${req.headers.host}`).pathname;
   const safePath = path.normalize(requestPath).replace(/^(\.\.[/\\])+/, "");
@@ -398,6 +412,54 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/api/weather" && req.method === "GET") {
       sendJson(res, 200, await readWeather());
+      return;
+    }
+
+    if (url.pathname === "/api/zora-inbox" && req.method === "GET") {
+      if (!requireZoraInboxAccess(req, res)) return;
+      sendJson(res, 200, { items: zoraInbox.listItems({ status: url.searchParams.get("status") || "new" }) });
+      return;
+    }
+
+    if (url.pathname === "/api/zora-inbox" && req.method === "POST") {
+      if (!requireZoraInboxAccess(req, res)) return;
+      const body = JSON.parse(await readRequestBody(req));
+      sendJson(res, 201, { item: zoraInbox.createItem({ text: body.text, source: body.source || "homedash" }) });
+      return;
+    }
+
+    const zoraInboxMatch = url.pathname.match(/^\/api\/zora-inbox\/([^/]+)(?:\/(processed))?$/);
+    if (zoraInboxMatch && req.method === "POST" && zoraInboxMatch[2] === "processed") {
+      if (!requireZoraInboxAccess(req, res)) return;
+      const item = zoraInbox.updateItem(decodeURIComponent(zoraInboxMatch[1]), { status: "processed" });
+      if (!item) {
+        sendJson(res, 404, { error: "Inbox-Eintrag nicht gefunden" });
+        return;
+      }
+      sendJson(res, 200, { item });
+      return;
+    }
+
+    if (zoraInboxMatch && req.method === "PATCH") {
+      if (!requireZoraInboxAccess(req, res)) return;
+      const body = JSON.parse(await readRequestBody(req));
+      const item = zoraInbox.updateItem(decodeURIComponent(zoraInboxMatch[1]), body);
+      if (!item) {
+        sendJson(res, 404, { error: "Inbox-Eintrag nicht gefunden" });
+        return;
+      }
+      sendJson(res, 200, { item });
+      return;
+    }
+
+    if (zoraInboxMatch && req.method === "DELETE") {
+      if (!requireZoraInboxAccess(req, res)) return;
+      const deleted = zoraInbox.deleteItem(decodeURIComponent(zoraInboxMatch[1]));
+      if (!deleted) {
+        sendJson(res, 404, { error: "Inbox-Eintrag nicht gefunden" });
+        return;
+      }
+      sendJson(res, 200, { ok: true });
       return;
     }
 

@@ -38,6 +38,7 @@
         <button class="primary admin-only" id="addButton" type="button">+ Link</button>
         <button class="admin-only" id="addWidgetButton" type="button">+ Widget</button>
         <button class="admin-only" id="newNoteButton" type="button">+ Notiz</button>
+        <button class="admin-only" id="newZoraInboxButton" type="button">+ Zora</button>
         <button id="adminButton" type="button" aria-pressed="false">Admin gesperrt</button>
         <label class="compact-field command-profile">
           <span>Profil</span>
@@ -71,6 +72,15 @@
           </header>
           <div id="notesList" class="notes-list"></div>
           <textarea id="noteInput" rows="2" placeholder="Neue Notiz"></textarea>
+        </article>
+        <article class="widget zora-inbox-widget" id="zoraInboxWidget" data-widget="zora-inbox">
+          <header class="widget-header">
+            <p>Zora Inbox</p>
+            <button id="refreshZoraInboxButton" class="admin-only" type="button">Aktualisieren</button>
+          </header>
+          <div id="zoraInboxList" class="zora-inbox-list"></div>
+          <textarea id="zoraInboxInput" rows="3" placeholder="Gedanke fuer Zora"></textarea>
+          <button id="addZoraInboxButton" class="primary admin-only" type="button">Speichern</button>
         </article>
       </section>
 
@@ -284,6 +294,10 @@
             <span>Notizenbereich anzeigen</span>
           </label>
           <label class="toggle-row">
+            <input id="settingShowZoraInbox" type="checkbox" />
+            <span>Zora Inbox anzeigen</span>
+          </label>
+          <label class="toggle-row">
             <input id="settingOpenLinksInNewTab" type="checkbox" />
             <span>Links in neuem Tab öffnen</span>
           </label>
@@ -443,6 +457,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/app.js?v=1.21.1"></script>
+    <script type="module" src="/app.js?v=1.22.0"></script>
   </body>
 </html>

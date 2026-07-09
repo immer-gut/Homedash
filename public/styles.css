@@ -569,7 +569,8 @@ textarea:focus {
   text-transform: uppercase;
 }
 
-.notes-widget {
+.notes-widget,
+.zora-inbox-widget {
   min-height: 0;
 }
 
@@ -818,6 +819,12 @@ textarea:focus {
   margin-bottom: 10px;
 }
 
+.zora-inbox-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .note-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -829,12 +836,47 @@ textarea:focus {
   background: rgba(255, 255, 255, 0.055);
 }
 
+.zora-inbox-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent-2);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
 .note-card p,
+.zora-inbox-card p,
 .empty-note {
   margin: 0;
   color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 650;
   line-height: 1.35;
+  text-transform: none;
   white-space: pre-wrap;
+}
+
+.zora-inbox-card small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.zora-inbox-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.zora-inbox-actions button,
+#addZoraInboxButton {
+  min-height: 34px;
+}
+
+#zoraInboxInput {
+  margin-bottom: 8px;
 }
 
 .empty-note {

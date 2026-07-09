@@ -2,7 +2,7 @@
 
 Homedash ist eine kleine, Docker-freundliche Startseite fuer das Heimnetz. Links, Kategorien, Seitentitel und Untertitel werden direkt im Browser gepflegt und dauerhaft in einem Docker-Volume gespeichert.
 
-Aktuelle Version: `v1.21.1`
+Aktuelle Version: `v1.22.0`
 
 ## Funktionen
 
@@ -16,7 +16,7 @@ Aktuelle Version: `v1.21.1`
 - Optionale Link-Statusanzeigen fuer Proxmox VE, Proxmox Backup Server, Home Assistant, Unraid, AMP und einfache HTTP-Dienste
 - Themes: Retro, Time Circuit, Fallout 4, Dark, Light und Terminal
 - Startseiten- und Freigabe-Modus fuer normale Read-only Nutzung
-- Widget-Galerie fuer Wetter, Notizen, Statusuebersicht und Linkstatistik
+- Widget-Galerie fuer Wetter, Notizen, Zora Inbox, Statusuebersicht und Linkstatistik
 
 ## Erster Start
 
@@ -51,7 +51,7 @@ In Portainer kannst du Homedash als Git-Stack deployen.
 Empfohlene Stack-Variablen:
 
 ```text
-HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.21.1
+HOMEDASH_IMAGE=ghcr.io/immer-gut/homedash:v1.22.0
 HOMEDASH_PORT=3002
 HOMEDASH_INTERNAL_PORT=3000
 HOMEDASH_VOLUME_NAME=homedash_data
@@ -64,14 +64,14 @@ Testhinweise fuer Portainer:
 - Fuer Tests einen eigenen externen Port und ein eigenes Volume verwenden, zum Beispiel `HOMEDASH_PORT=3003` und `HOMEDASH_VOLUME_NAME=homedash_test_data`.
 - Vor Restore-Tests ein Backup ueber die UI oder das Docker-Volume erstellen.
 - Nach Deploy oder Update `http://<server-ip>:<port>/api/health` pruefen und die Startseite im Browser neu laden.
-- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.21.1` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
+- Wenn das Image auf `latest` steht, in Portainer vor dem Test ein Pull/Redeploy ausfuehren. Fuer stabile Deployments ist ein Versions-Tag wie `v1.22.0` besser, ja, erstaunlicherweise hilft Versionierung beim Versionieren.
 
 Alternativ kannst du in Portainer einen Stack direkt mit dem Image anlegen:
 
 ```yaml
 services:
   homedash:
-    image: ghcr.io/immer-gut/homedash:v1.21.1
+    image: ghcr.io/immer-gut/homedash:v1.22.0
     restart: unless-stopped
     ports:
       - "3002:3000"
@@ -80,6 +80,7 @@ services:
       HOST: 0.0.0.0
       DATA_DIR: /data
       ADMIN_PASSWORD:
+      ZORA_INBOX_TOKEN:
       HOMEDASH_STATUS_TARGETS: "[]"
     volumes:
       - homedash_data:/data
@@ -103,11 +104,12 @@ Die Compose-Datei verwendet `HOMEDASH_*` Variablen fuer Deployment-Details und s
 
 | Variable | Standard | Beschreibung |
 | --- | --- | --- |
-| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.21.1` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
+| `HOMEDASH_IMAGE` | `ghcr.io/immer-gut/homedash:v1.22.0` | Docker Image fuer den Stack. Fuer einfache Tests kann `latest` genutzt werden, fuer Portainer besser einen Versions-Tag setzen. |
 | `HOMEDASH_PORT` | `3002` | Externer Host-Port. |
 | `HOMEDASH_INTERNAL_PORT` | `3000` | Interner Container-Port und Wert fuer `PORT`. Normalerweise unveraendert lassen. |
 | `HOMEDASH_VOLUME_NAME` | `homedash_data` | Docker-Volume fuer Daten und Favicons. Fuer mehrere Stacks jeweils einen eigenen Namen setzen. |
 | `ADMIN_PASSWORD` | leer | Optionales Admin-Passwort. Alternativ kann das Passwort beim ersten Start im Setup gesetzt werden. |
+| `ZORA_INBOX_TOKEN` | leer | Optionaler Bearer-Token fuer die Zora-Inbox-API. Wenn leer, gilt die normale Admin-Session. |
 | `HOMEDASH_STATUS_TARGETS` | `[]` | Optionales JSON fuer Link-Statusanzeigen. Secrets bleiben in der Container-Umgebung. |
 
 Container-interne Variablen:
@@ -121,7 +123,7 @@ Container-interne Variablen:
 Das Image wird per GitHub Actions automatisch gebaut und in GitHub Container Registry veroeffentlicht:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.21.1
+ghcr.io/immer-gut/homedash:v1.22.0
 ```
 
 Bei Pushes auf `main` wird `latest` aktualisiert. Git-Tags im Format `vX.Y.Z`, zum Beispiel `v1.1.1`, erzeugen zusaetzliche versionierte Image-Tags. Pull Requests werden nur gebaut, aber nicht gepusht.
@@ -137,7 +139,7 @@ Homedash nutzt ab `v1.1.0` semantische Versionierung:
 Fuer Portainer wird ein gepinnter Image-Tag empfohlen:
 
 ```text
-ghcr.io/immer-gut/homedash:v1.21.1
+ghcr.io/immer-gut/homedash:v1.22.0
 ```
 
 `latest` bleibt verfuegbar, ist aber beweglich. Praktisch fuer Tests, weniger praktisch, wenn man spaeter wissen will, was eigentlich laeuft. Verrueckte Idee, ich weiss.
@@ -157,6 +159,7 @@ docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 - `server/http.js` buendelt wiederverwendbare HTTP-Requests fuer Metadaten, Wetter und Status-Integrationen.
 - `server/link-metadata.js` enthaelt Seitentitel- und Favicon-Erkennung fuer Links.
 - `server/weather.js` enthaelt Wetterabruf und Wetterformatierung.
+- `server/zora-inbox.js` speichert die getrennte Zora Inbox in `zora-inbox.json`.
 - `server/status/` enthaelt ausgelagerte Status-Provider fuer Proxmox VE, Proxmox Backup Server, Home Assistant, Generic HTTP, Unraid und AMP.
 - `server/status/index.js` registriert die Status-Provider zentral, damit neue Provider an einer Stelle verdrahtet werden.
 - `public/categories.js` buendelt Kategorienamen, Farben, Sichtbarkeit und den Kategorien-Dialog.
@@ -183,6 +186,48 @@ Mit `Ctrl+Alt+L` kann der Admin-Modus ohne Passwort entsperrt oder wieder gesper
 Der Freigabe-Modus blendet im gesperrten Zustand den Admin-Hinweis aus. Das ist fuer Familien-, Werkstatt- oder Tablet-Ansichten gedacht, bei denen Homedash wie eine ruhige Startseite wirken soll.
 
 Das Passwort kann entweder per `ADMIN_PASSWORD` als Environment-Variable gesetzt werden oder beim ersten Start im Setup. Das Setup-Passwort wird gehasht in `homedash.json` gespeichert.
+
+## Zora Inbox
+
+Die Zora Inbox ist ein getrenntes Widget fuer Gedanken, die spaeter von Codex/Zora verarbeitet und nach Obsidian uebertragen werden sollen. Die Eintraege liegen nicht in `homedash.json`, sondern separat im Datenvolume:
+
+```text
+/data/zora-inbox.json
+```
+
+Im Browser:
+
+- `+ Zora` fokussiert das Eingabefeld.
+- `Speichern` legt einen neuen offenen Eintrag an.
+- `Erledigt` markiert einen Eintrag als verarbeitet.
+- `Loeschen` entfernt einen Eintrag direkt.
+
+API fuer Zora/Codex:
+
+```bash
+curl -H "Authorization: Bearer $ZORA_INBOX_TOKEN" \
+  "http://<server-ip>:3002/api/zora-inbox?status=new"
+```
+
+Neuen Gedanken anlegen:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ZORA_INBOX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"text\":\"Gedanke fuer spaeter\",\"source\":\"iphone\"}" \
+  "http://<server-ip>:3002/api/zora-inbox"
+```
+
+Nach Verarbeitung markieren:
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer $ZORA_INBOX_TOKEN" \
+  "http://<server-ip>:3002/api/zora-inbox/<id>/processed"
+```
+
+Wenn `ZORA_INBOX_TOKEN` leer ist, gelten die normalen Admin-Cookies. Fuer einen automatischen Abruf durch Codex ist ein Token praktischer.
 
 ## Themes
 
@@ -221,6 +266,7 @@ Beim Schreiben normalisiert Homedash Daten wie fehlende IDs, Kategorien und URLs
 Wichtige Daten liegen im Docker-Volume:
 
 - `homedash.json`: Startseiten-Konfiguration
+- `zora-inbox.json`: Offene und verarbeitete Zora-Inbox-Eintraege
 - `favicons/`: Lokaler Favicon-Cache
 
 Ein einfaches Backup ist der UI-Backup-Download im Browser. Fuer ein vollstaendiges Volume-Backup sichere das Docker-Volume aus `HOMEDASH_VOLUME_NAME`, standardmaessig `homedash_data`.
@@ -360,7 +406,7 @@ docker compose up -d
 Portainer Update:
 
 1. Stack oeffnen.
-2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.21.1`.
+2. Bei gepinnten Versionen `HOMEDASH_IMAGE` auf den neuen Tag setzen, zum Beispiel `ghcr.io/immer-gut/homedash:v1.22.0`.
 3. `Pull image/redeploy` oder `Update the stack` ausfuehren.
 4. Bei Git-Stacks sicherstellen, dass Branch `main` und Compose path `docker-compose.yml` weiterhin stimmen.
 

@@ -45,6 +45,7 @@ function createDefaultData() {
       compactCategoryLayout: false,
       showLinkStatus: true,
       showNotes: true,
+      showZoraInbox: true,
       openLinksInNewTab: true
     },
     admin: {
@@ -204,6 +205,7 @@ function normalizePreferences(preferences) {
     compactCategoryLayout: preferences?.compactCategoryLayout === true,
     showLinkStatus: preferences?.showLinkStatus !== false,
     showNotes: preferences?.showNotes !== false,
+    showZoraInbox: preferences?.showZoraInbox !== false,
     openLinksInNewTab: preferences?.openLinksInNewTab !== false
   };
 }

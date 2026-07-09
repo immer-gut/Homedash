@@ -2,6 +2,14 @@
 
 Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei dokumentiert.
 
+## v1.22.0 - 2026-07-09
+
+- Zora Inbox als eigenes Widget fuer Gedanken an Codex/Zora ergaenzt.
+- Neue API `GET/POST /api/zora-inbox` plus Endpunkte zum Markieren und Loeschen von Eintraegen.
+- Optionaler `ZORA_INBOX_TOKEN` fuer API-Abruf ohne Browser-Cookie.
+- Inbox-Daten werden getrennt in `zora-inbox.json` im Datenvolume gespeichert.
+- Standard-Image-Tag auf `v1.22.0` angehoben.
+
 ## v1.21.1 - 2026-07-08
 
 - Button-Spalte in Statuskarten ausgerichtet.

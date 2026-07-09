@@ -1,6 +1,6 @@
 services:
   homedash:
-    image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:v1.21.1}
+    image: ${HOMEDASH_IMAGE:-ghcr.io/immer-gut/homedash:v1.22.0}
     restart: unless-stopped
     ports:
       - "${HOMEDASH_PORT:-3002}:${HOMEDASH_INTERNAL_PORT:-3000}"
@@ -9,6 +9,7 @@ services:
       HOST: 0.0.0.0
       DATA_DIR: /data
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ZORA_INBOX_TOKEN: ${ZORA_INBOX_TOKEN:-}
       HOMEDASH_STATUS_TARGETS: ${HOMEDASH_STATUS_TARGETS:-[]}
     volumes:
       - homedash_data:/data

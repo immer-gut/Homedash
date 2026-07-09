@@ -20,10 +20,11 @@ const state = {
   links: [],
   statusTargets: [],
   widgets: { clock: true, notes: [], statusOverview: false, linkStats: false, weather: { enabled: false, label: "Zuhause", latitude: "", longitude: "" }, dateCountdown: { enabled: false, items: [] } },
-  preferences: { startpageMode: true, shareMode: false, showCategoryCounts: false, compactCategoryLayout: false, showLinkStatus: true, showNotes: true, openLinksInNewTab: true },
+  preferences: { startpageMode: true, shareMode: false, showCategoryCounts: false, compactCategoryLayout: false, showLinkStatus: true, showNotes: true, showZoraInbox: true, openLinksInNewTab: true },
   auth: { enabled: false, authenticated: true },
   status: { configured: 0, updatedAt: "", items: [] },
   weather: { enabled: false },
+  zoraInbox: { items: [], loading: false, message: "" },
   app: { name: "Homedash", version: "" },
   statusLoading: false,
   weatherLoading: false,
@@ -44,6 +45,7 @@ const elements = {
   addButton: document.querySelector("#addButton"),
   addWidgetButton: document.querySelector("#addWidgetButton"),
   newNoteButton: document.querySelector("#newNoteButton"),
+  newZoraInboxButton: document.querySelector("#newZoraInboxButton"),
   settingsButton: document.querySelector("#settingsButton"),
   adminButton: document.querySelector("#adminButton"),
   profileSelect: document.querySelector("#profileSelect"),
@@ -67,6 +69,11 @@ const elements = {
   notesList: document.querySelector("#notesList"),
   noteInput: document.querySelector("#noteInput"),
   addNoteButton: document.querySelector("#addNoteButton"),
+  zoraInboxWidget: document.querySelector("#zoraInboxWidget"),
+  zoraInboxList: document.querySelector("#zoraInboxList"),
+  zoraInboxInput: document.querySelector("#zoraInboxInput"),
+  addZoraInboxButton: document.querySelector("#addZoraInboxButton"),
+  refreshZoraInboxButton: document.querySelector("#refreshZoraInboxButton"),
   setupDialog: document.querySelector("#setupDialog"),
   setupForm: document.querySelector("#setupForm"),
   setupTitle: document.querySelector("#setupTitle"),
@@ -123,6 +130,7 @@ const elements = {
   settingCompactCategoryLayout: document.querySelector("#settingCompactCategoryLayout"),
   settingShowLinkStatus: document.querySelector("#settingShowLinkStatus"),
   settingShowNotes: document.querySelector("#settingShowNotes"),
+  settingShowZoraInbox: document.querySelector("#settingShowZoraInbox"),
   settingOpenLinksInNewTab: document.querySelector("#settingOpenLinksInNewTab"),
   settingStartpageMode: document.querySelector("#settingStartpageMode"),
   settingShareMode: document.querySelector("#settingShareMode"),
@@ -174,7 +182,8 @@ const widgetRegistry = [
   { id: "statusOverview", render: renderStatus, isHidden: () => elements.statusWidget.hidden },
   { id: "linkStats", render: renderStatsWidget, isHidden: () => elements.statsWidget.hidden },
   { id: "dateCountdown", render: renderDateCountdowns, isHidden: () => elements.dateCountdownWidget.hidden },
-  { id: "notes", render: renderNotesWidget, isHidden: () => elements.notesWidget.hidden }
+  { id: "notes", render: renderNotesWidget, isHidden: () => elements.notesWidget.hidden },
+  { id: "zoraInbox", render: renderZoraInboxWidget, isHidden: () => elements.zoraInboxWidget.hidden }
 ];
 
 const widgetSettingsRegistry = [
@@ -269,6 +278,7 @@ async function loadData() {
   if (!state.setupComplete) elements.setupDialog.showModal();
   loadStatus().catch(() => {});
   loadWeather().catch(() => {});
+  loadZoraInbox().catch(() => {});
 }
 
 function syncActiveProfileAliases() {
@@ -344,6 +354,31 @@ async function loadWeather() {
   }
 }
 
+async function loadZoraInbox() {
+  if (state.preferences?.showZoraInbox === false) {
+    state.zoraInbox = { items: [], loading: false, message: "" };
+    renderZoraInboxWidget();
+    return;
+  }
+  if (!canEdit()) {
+    state.zoraInbox = { items: [], loading: false, message: "Admin gesperrt" };
+    renderZoraInboxWidget();
+    return;
+  }
+  state.zoraInbox = { ...(state.zoraInbox || {}), loading: true, message: "" };
+  renderZoraInboxWidget();
+  try {
+    const response = await fetch("/api/zora-inbox?status=new");
+    if (!response.ok) throw new Error("Zora Inbox konnte nicht geladen werden");
+    const payload = await response.json();
+    state.zoraInbox = { items: Array.isArray(payload.items) ? payload.items : [], loading: false, message: "" };
+  } catch (error) {
+    state.zoraInbox = { items: [], loading: false, message: error.message };
+  } finally {
+    renderZoraInboxWidget();
+  }
+}
+
 function syncProfileFromAliases() {
   const index = state.profiles.findIndex((profile) => profile.id === state.activeProfileId);
   const nextProfile = {
@@ -411,6 +446,32 @@ function renderNotesWidget() {
   elements.noteInput.disabled = !canEdit();
   elements.addNoteButton.disabled = !canEdit();
   elements.notesList.replaceChildren(...notes.map(createNoteCard));
+}
+
+function renderZoraInboxWidget() {
+  const hidden = state.preferences?.showZoraInbox === false;
+  elements.zoraInboxWidget.hidden = hidden;
+  if (hidden) return;
+  const editable = canEdit();
+  const inbox = state.zoraInbox || {};
+  const items = Array.isArray(inbox.items) ? inbox.items : [];
+  elements.zoraInboxInput.disabled = !editable || inbox.loading;
+  elements.addZoraInboxButton.disabled = !editable || inbox.loading;
+  elements.refreshZoraInboxButton.disabled = !editable || inbox.loading;
+
+  if (!editable) {
+    elements.zoraInboxList.replaceChildren(createInboxMessage("Admin entsperren"));
+    return;
+  }
+  if (inbox.loading) {
+    elements.zoraInboxList.replaceChildren(createInboxMessage("Wird geladen"));
+    return;
+  }
+  if (inbox.message) {
+    elements.zoraInboxList.replaceChildren(createInboxMessage(inbox.message));
+    return;
+  }
+  elements.zoraInboxList.replaceChildren(...(items.length ? items.map(createZoraInboxCard) : [createInboxMessage("Keine offenen Gedanken")]));
 }
 
 function renderDateCountdowns() {
@@ -606,6 +667,47 @@ function createNoteCard(note) {
   });
   card.append(text, remove);
   return card;
+}
+
+function createZoraInboxCard(item) {
+  const card = document.createElement("article");
+  card.className = "zora-inbox-card";
+  const text = document.createElement("p");
+  text.textContent = item.text || "";
+  const meta = document.createElement("small");
+  meta.textContent = formatInboxDate(item.createdAt);
+  const actions = document.createElement("div");
+  actions.className = "zora-inbox-actions";
+  const done = document.createElement("button");
+  done.type = "button";
+  done.textContent = "Erledigt";
+  done.addEventListener("click", () => markZoraInboxProcessed(item.id).catch((error) => showToast(error.message)));
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "danger subtle-danger";
+  remove.textContent = "Loeschen";
+  remove.addEventListener("click", () => deleteZoraInboxItem(item.id).catch((error) => showToast(error.message)));
+  actions.append(done, remove);
+  card.append(text, meta, actions);
+  return card;
+}
+
+function createInboxMessage(message) {
+  const item = document.createElement("p");
+  item.className = "empty-note";
+  item.textContent = message;
+  return item;
+}
+
+function formatInboxDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Gerade eben";
+  return new Intl.DateTimeFormat("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function renderCategoryList() {
@@ -921,6 +1023,7 @@ function openSettingsDialog() {
   elements.settingCompactCategoryLayout.checked = state.preferences?.compactCategoryLayout === true;
   elements.settingShowLinkStatus.checked = state.preferences?.showLinkStatus !== false;
   elements.settingShowNotes.checked = state.preferences?.showNotes !== false;
+  elements.settingShowZoraInbox.checked = state.preferences?.showZoraInbox !== false;
   elements.settingOpenLinksInNewTab.checked = state.preferences?.openLinksInNewTab !== false;
   elements.settingStartpageMode.checked = state.preferences?.startpageMode !== false;
   elements.settingShareMode.checked = state.preferences?.shareMode === true;
@@ -986,6 +1089,47 @@ function openNoteComposer() {
   elements.settingsDialog.close();
   renderWidgets();
   window.requestAnimationFrame(() => elements.noteInput.focus());
+}
+
+function openZoraInboxComposer() {
+  if (!canEdit()) return openAdminDialog();
+  state.preferences = {
+    ...(state.preferences || {}),
+    showZoraInbox: true
+  };
+  renderWidgets();
+  window.requestAnimationFrame(() => elements.zoraInboxInput.focus());
+}
+
+async function saveZoraInboxNote() {
+  if (!canEdit()) return openAdminDialog();
+  const text = elements.zoraInboxInput.value.trim();
+  if (!text) return;
+  const response = await fetch("/api/zora-inbox", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, source: "homedash" })
+  });
+  if (!response.ok) throw new Error((await response.json()).error || "Zora Inbox konnte nicht gespeichert werden");
+  elements.zoraInboxInput.value = "";
+  await loadZoraInbox();
+  showToast("Gedanke gespeichert");
+}
+
+async function markZoraInboxProcessed(id) {
+  if (!canEdit()) return openAdminDialog();
+  const response = await fetch(`/api/zora-inbox/${encodeURIComponent(id)}/processed`, { method: "POST" });
+  if (!response.ok) throw new Error((await response.json()).error || "Eintrag konnte nicht markiert werden");
+  await loadZoraInbox();
+  showToast("Eintrag erledigt");
+}
+
+async function deleteZoraInboxItem(id) {
+  if (!canEdit()) return openAdminDialog();
+  const response = await fetch(`/api/zora-inbox/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error((await response.json()).error || "Eintrag konnte nicht geloescht werden");
+  await loadZoraInbox();
+  showToast("Eintrag geloescht");
 }
 
 function upsertCategoryFromLink(name) {
@@ -1129,6 +1273,7 @@ async function saveSettings() {
     compactCategoryLayout: elements.settingCompactCategoryLayout.checked,
     showLinkStatus: elements.settingShowLinkStatus.checked,
     showNotes: elements.settingShowNotes.checked,
+    showZoraInbox: elements.settingShowZoraInbox.checked,
     openLinksInNewTab: elements.settingOpenLinksInNewTab.checked,
     startpageMode: elements.settingStartpageMode.checked,
     shareMode: elements.settingShareMode.checked
@@ -1137,6 +1282,7 @@ async function saveSettings() {
   await saveData("Einstellungen gespeichert");
   elements.settingsDialog.close();
   loadWeather().catch(() => {});
+  loadZoraInbox().catch(() => {});
 }
 
 function collectWidgetSettings() {
@@ -1505,6 +1651,7 @@ elements.addButton.addEventListener("click", () => openLinkDialog());
 elements.addWidgetButton.addEventListener("click", () => openStatusWidgetDialog());
 elements.settingsButton.addEventListener("click", openSettingsDialog);
 elements.newNoteButton.addEventListener("click", openNoteComposer);
+elements.newZoraInboxButton.addEventListener("click", openZoraInboxComposer);
 elements.settingsCategoriesButton.addEventListener("click", () => {
   elements.settingsDialog.close();
   openCategoriesDialog();
@@ -1587,6 +1734,14 @@ elements.addNoteButton.addEventListener("click", async () => {
   state.noteComposerOpen = false;
   elements.noteInput.value = "";
   await saveData("Notiz gespeichert");
+});
+elements.addZoraInboxButton.addEventListener("click", () => saveZoraInboxNote().catch((error) => showToast(error.message)));
+elements.refreshZoraInboxButton.addEventListener("click", () => loadZoraInbox().catch((error) => showToast(error.message)));
+elements.zoraInboxInput.addEventListener("keydown", (event) => {
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    event.preventDefault();
+    saveZoraInboxNote().catch((error) => showToast(error.message));
+  }
 });
 elements.runImportButton.addEventListener("click", () => runImport().catch((error) => showToast(error.message)));
 elements.completeSetupButton.addEventListener("click", () => completeSetup().catch((error) => showToast(error.message)));
