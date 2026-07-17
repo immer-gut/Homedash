@@ -7,6 +7,12 @@ Alle nennenswerten Aenderungen an Homedash werden ab `v1.1.0` in dieser Datei do
 - Portainer/GHCR-Fehlerpfad dokumentiert: Bei generischem Portainer-500 zuerst Logs, Registry-Token, `read:packages` und GHCR-Package-Sichtbarkeit pruefen.
 - Hinweis ergaenzt, dass ein public GitHub-Repository nicht automatisch ein public GHCR-Package bedeutet.
 
+## v1.22.1 - 2026-07-17
+
+- Notizen-Widget und Zora Inbox unter die Link-Kategorien ans Seitenende verschoben.
+- Oberen und unteren Widget-Bereich getrennt ein-/ausblendbar gemacht.
+- Standard-Image-Tag auf `v1.22.1` angehoben.
+
 ## v1.22.0 - 2026-07-09
 
 - Zora Inbox als eigenes Widget fuer Gedanken an Codex/Zora ergaenzt.

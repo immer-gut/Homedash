@@ -65,6 +65,21 @@
           </header>
           <div id="statsList" class="mini-stats"></div>
         </article>
+      </section>
+
+      <section id="lockedState" class="empty" hidden>
+        <h2>Admin gesperrt</h2>
+        <p>Links sind sichtbar. Änderungen, Import und Profilverwaltung werden nach dem Entsperren aktiv.</p>
+      </section>
+
+      <section id="emptyState" class="empty" hidden>
+        <h2>Noch keine Treffer</h2>
+        <p>Lege einen neuen Link an oder passe die Suche an.</p>
+      </section>
+
+      <section id="groups" class="groups" aria-label="Links"></section>
+
+      <section id="bottomWidgets" class="widgets bottom-widgets" aria-label="Notizen und Inbox">
         <article class="widget notes-widget" id="notesWidget" data-widget="notes">
           <header class="widget-header">
             <p>Notizen</p>
@@ -83,18 +98,6 @@
           <button id="addZoraInboxButton" class="primary admin-only" type="button">Speichern</button>
         </article>
       </section>
-
-      <section id="lockedState" class="empty" hidden>
-        <h2>Admin gesperrt</h2>
-        <p>Links sind sichtbar. Änderungen, Import und Profilverwaltung werden nach dem Entsperren aktiv.</p>
-      </section>
-
-      <section id="emptyState" class="empty" hidden>
-        <h2>Noch keine Treffer</h2>
-        <p>Lege einen neuen Link an oder passe die Suche an.</p>
-      </section>
-
-      <section id="groups" class="groups" aria-label="Links"></section>
     </main>
 
     <dialog id="setupDialog">
@@ -457,6 +460,6 @@
     </dialog>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
-    <script type="module" src="/app.js?v=1.22.0"></script>
+    <script type="module" src="/app.js?v=1.22.1"></script>
   </body>
 </html>

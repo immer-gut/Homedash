@@ -53,6 +53,7 @@ const elements = {
   deleteProfileButton: document.querySelector("#deleteProfileButton"),
   themeSelect: document.querySelector("#themeSelect"),
   widgets: document.querySelector("#widgets"),
+  bottomWidgets: document.querySelector("#bottomWidgets"),
   weatherWidget: document.querySelector("#weatherWidget"),
   weatherLabel: document.querySelector("#weatherLabel"),
   weatherBody: document.querySelector("#weatherBody"),
@@ -435,7 +436,8 @@ function renderProfiles() {
 
 function renderWidgets() {
   widgetRegistry.forEach((widget) => widget.render());
-  elements.widgets.hidden = widgetRegistry.every((widget) => widget.isHidden());
+  elements.widgets.hidden = [elements.dateCountdownWidget, elements.statusWidget, elements.statsWidget].every((widget) => widget.hidden);
+  elements.bottomWidgets.hidden = [elements.notesWidget, elements.zoraInboxWidget].every((widget) => widget.hidden);
 }
 
 function renderNotesWidget() {
